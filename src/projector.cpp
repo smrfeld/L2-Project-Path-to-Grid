@@ -34,7 +34,12 @@ namespace L2PG {
 		int _no_pts_grid;
 
 		// Grid points
-		std::vector<std::shared_ptr<GridPt>> _grid_pts;
+		// std::vector<std::shared_ptr<GridPt>> _grid_pts;
+		std::map<IdxSet, std::shared_ptr<GridPt>> _grid_pts;
+
+		// Outside grid points
+		// std::vector<std::shared_ptr<GridPtOut>> _grid_pts_out;
+		std::map<IdxSet, std::shared_ptr<GridPtOut>> _grid_pts_out;
 
 		// Length of the data
 		int _no_pts_data;
@@ -83,7 +88,7 @@ namespace L2PG {
 		Get grid points
 		********************/
 
-		std::shared_ptr<GridPt> get_grid_point(int grid_idx) const;
+		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
 
 		/********************
 		Get neighbors
@@ -196,6 +201,7 @@ namespace L2PG {
 		_no_pts_data = other._no_pts_data;
 		_no_pts_grid = other._no_pts_grid;
 		_grid_pts = other._grid_pts;
+		_grid_pts_out = other._grid_pts_out;
 		_data_pts = other._data_pts;
 	};
 	void Projector::Impl::_move(Impl& other)
@@ -209,6 +215,7 @@ namespace L2PG {
 		other._no_pts_data = 0;
 		other._no_pts_grid = 0;
 		other._grid_pts.clear();
+		other._grid_pts_out.clear();
 		other._data_pts.clear();
 	};
 
@@ -384,7 +391,7 @@ namespace L2PG {
 			idxs = get_idxs(i_line);
 
 			// Put into vec
-			_grid_pts.push_back(std::make_shared<GridPt>(idxs, abcissas));
+			_grid_pts[idxs] = std::make_shared<GridPt>(idxs, abcissas);
 
 			// Next line
 			i_line++;			
@@ -467,8 +474,8 @@ namespace L2PG {
 	Get grid point
 	********************/
 
-	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(int grid_idx) const {
-		return _grid_pts[grid_idx];
+	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSet grid_idxs) const {
+		return _grid_pts.at(grid_idxs);
 	};
 
 	/********************
@@ -601,7 +608,7 @@ namespace L2PG {
 		return get_grid_point(grid_idxs);
 	};
 	std::shared_ptr<GridPt> Projector::get_grid_point(int grid_idx) const {
-		return _impl->get_grid_point(grid_idx);
+		return _impl->get_grid_point(get_idxs(grid_idx));
 	};
 
 	/********************
