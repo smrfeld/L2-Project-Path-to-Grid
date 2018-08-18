@@ -15,6 +15,7 @@ namespace L2PG {
 
 	// Forward
 	class GridPt;
+	class IdxSet;
 
 	class GridPtOut {
 
@@ -30,7 +31,7 @@ namespace L2PG {
 		********************/
 
 		// Value = 2 p1 - p2
-		GridPtOut(std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2);
+		GridPtOut(IdxSet idxs, std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2);
 		GridPtOut(const GridPtOut& other);
 		GridPtOut(GridPtOut&& other);
 		GridPtOut& operator=(const GridPtOut &other);
@@ -38,7 +39,7 @@ namespace L2PG {
 		~GridPtOut();
 
 		/********************
-		Access
+		Accessors
 		********************/
 
 		// Abscissa
@@ -48,9 +49,14 @@ namespace L2PG {
 		// Ordinate
 		double get_ordinate() const;
 
+		// Idxs
+		int get_idx(int dim) const;
+		IdxSet get_idxs() const;
+
 		// Get dependent points
 		std::shared_ptr<GridPt> get_dep_p1() const;
 		std::shared_ptr<GridPt> get_dep_p2() const;
+		
 	};
 
 };

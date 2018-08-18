@@ -7,37 +7,31 @@ using namespace L2PG;
 
 int main() {
 
+	// Dims
+	auto d1 = make_shared<Dim>(0.0,1.0,11);
+	auto d2 = make_shared<Dim>(0.0,1.0,11);
+	std::vector<std::shared_ptr<Dim>> dims({d1,d2});
+
 	// Projector
 	cout << "> Making projector" << endl;
-	int dim_grid = 2; // Dim of the grid
-	std::vector<int> no_pts_dim = {11,11}; // 11x11 grid
-	int no_pts_path = 20; // data length
-	auto proj = Projector(dim_grid,no_pts_dim,no_pts_path);
-
-	// Read grid
-	cout << "> Reading grid" << endl;
-	proj.read_grid("grid.txt");
-
-	// Read path
-	// cout << "> Reading path" << endl;
-	// proj.read_path("path.txt");
+	auto proj = Projector(dims);
 
 	// Get grid point
 	cout << "> Get grid point (1,3):" << endl;
-	shared_ptr<GridPt> grid_pt = proj.get_grid_point({1,3});
-	for (auto dim=0; dim<dim_grid; dim++) {
+	std::vector<int> idxs({1,3});
+	IdxSet idx_set(dims,idxs);
+	shared_ptr<GridPt> grid_pt = proj.get_grid_point(idx_set);
+	for (auto dim=0; dim<2; dim++) {
 		cout << grid_pt->get_abscissa(dim) << " ";
 	};
 	cout << endl;
 
-	// Get idxs of grid idx
-	cout << "> Get grid idx of 26:" << endl;
-	IdxSet grid_idxs = proj.get_idxs(26);
-	for (auto i=0; i<grid_idxs.size(); i++) {
-		cout << grid_idxs[i] << " ";
-	};
-	cout << endl;
-
+	// Get linear idx
+	cout << "> Linear idx: " << idx_set.get_linear() << endl;
+	
+	// Read path
+	// cout << "> Reading path" << endl;
+	// proj.read_path("path.txt");
 
 	return 0;
 

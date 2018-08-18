@@ -1,6 +1,8 @@
 #include "../include/L2ProjPathToGrid_bits/grid_pt_out.hpp"
 #include "../include/L2ProjPathToGrid_bits/grid_pt.hpp"
 
+#include <iostream>
+
 /************************************
 * Namespace for L2PG
 ************************************/
@@ -14,6 +16,9 @@ namespace L2PG {
 	class GridPtOut::Impl {
 
 	private:
+
+		// Idxs
+		IdxSet _idxs;
 
 		// Abscissa values
 		std::vector<double> _abcissas;
@@ -32,7 +37,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		Impl(std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2);
+		Impl(IdxSet idxs, std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2);
 		Impl(const Impl& other);
 		Impl(Impl&& other);
 		Impl& operator=(const Impl &other);
@@ -49,6 +54,10 @@ namespace L2PG {
 
 		// Ordinate
 		double get_ordinate() const;
+
+		// Idxs
+		int get_idx(int dim) const;
+		IdxSet get_idxs() const;
 
 		// Get dependent points
 		std::shared_ptr<GridPt> get_dep_p1() const;
@@ -81,8 +90,15 @@ namespace L2PG {
 	Implementation
 	****************************************/
 
-	GridPtOut::Impl::Impl(std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2) {
+	GridPtOut::Impl::Impl(IdxSet idxs, std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2) {
+		// Check lengths
+		if (idxs.size() != abscissas.size()) {
+			std::cout << ">>> Error: GridPt::Impl::Impl <<< Sizes must match." << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
 		// Store
+		_idxs = idxs;
 		_abcissas = abscissas;
 		_p1 = p1;
 		_p2 = p2;
@@ -122,17 +138,17 @@ namespace L2PG {
 	};
 	void GridPtOut::Impl::_copy(const Impl& other)
 	{
+		_idxs = other._idxs;
 		_abcissas = other._abcissas;
 		_p1 = other._p1;
 		_p2 = other._p2;
 	};
 	void GridPtOut::Impl::_move(Impl& other)
 	{
-		_abcissas = other._abcissas;
-		_p1 = other._p1;
-		_p2 = other._p2;
+		_copy(other);
 
 		// Reset other
+		other._idxs = IdxSet();
 		other._abcissas.clear();
 		other._p1 = nullptr;
 		other._p2 = nullptr;
@@ -153,6 +169,14 @@ namespace L2PG {
 	// Ordinate
 	double GridPtOut::Impl::get_ordinate() const {
 		return 2.0 * _p1->get_ordinate() - _p2->get_ordinate(); 
+	};
+
+	// Idxs
+	int GridPtOut::Impl::get_idx(int dim) const {
+		return _idxs[dim];
+	};
+	IdxSet GridPtOut::Impl::get_idxs() const {
+		return _idxs;
 	};
 
 	// Get dependent points
@@ -193,7 +217,7 @@ namespace L2PG {
 	Constructor
 	********************/
 
-	GridPtOut::GridPtOut(std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2) : _impl(new Impl(abscissas, p1, p2)) {};
+	GridPtOut::GridPtOut(IdxSet idxs, std::vector<double> abscissas, std::shared_ptr<GridPt> p1, std::shared_ptr<GridPt> p2) : _impl(new Impl(idxs,abscissas, p1, p2)) {};
 	GridPtOut::GridPtOut(const GridPtOut& other) : _impl(new Impl(*other._impl)) {};
 	GridPtOut::GridPtOut(GridPtOut&& other) : _impl(std::move(other._impl)) {};
 	GridPtOut& GridPtOut::operator=(const GridPtOut &other) {
@@ -221,6 +245,14 @@ namespace L2PG {
 	// Ordinate
 	double GridPtOut::get_ordinate() const {
 		return _impl->get_ordinate();
+	};
+
+	// Idxs
+	int GridPtOut::get_idx(int dim) const {
+		return _impl->get_idx(dim);
+	};
+	IdxSet GridPtOut::get_idxs() const {
+		return _impl->get_idxs();
 	};
 
 	// Get dependent points

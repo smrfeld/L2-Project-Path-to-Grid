@@ -1,4 +1,5 @@
 #include "../include/L2ProjPathToGrid_bits/grid_pt.hpp"
+#include "../include/L2ProjPathToGrid_bits/projector.hpp"
 
 #include <iostream>
 
@@ -14,12 +15,22 @@ namespace L2PG {
 
 	// Constructors
 	IdxSet::IdxSet() {};
-	IdxSet::IdxSet(int no_idxs) {
+	IdxSet::IdxSet(int no_idxs, int max_idx) {
 		for (auto i=0; i<no_idxs; i++) {
 			idxs.push_back(0);
+			max_idxs.push_back(max_idx);
 		};
 	};
-	IdxSet::IdxSet(std::vector<int> idxs) {
+	IdxSet::IdxSet(std::vector<std::shared_ptr<Dim>> dims) {
+		for (auto i=0; i<dims.size(); i++) {
+			idxs.push_back(0);
+			max_idxs.push_back(dims[i]->get_no_pts());
+		};
+	};
+	IdxSet::IdxSet(std::vector<std::shared_ptr<Dim>> dims, std::vector<int> idxs) {
+		for (auto i=0; i<dims.size(); i++) {
+			max_idxs.push_back(dims[i]->get_no_pts());
+		};
 		this->idxs = idxs;
 	};
 
@@ -31,25 +42,59 @@ namespace L2PG {
 		return idxs[i];
 	};
 
-	// Set
+	// Size
 	int IdxSet::size() const {
 		return idxs.size();
 	};
 
-	// Comparator
-	bool operator <(const IdxSet& x, const IdxSet& y) {
-		if (x.size() != y.size()) {
-			std::cerr << ">>> Error: Operator < for IdxSet <<< Unequal sizes!" << std::endl;
-			exit(EXIT_FAILURE);
-		};
-		for (auto i=0; i<x.size(); i++) {
-			if (x[i] >= y[i]) {
-				return false;
+	// Input: idx in each dim
+	int IdxSet::get_linear() const {
+		int ret=0,add=0;
+		for (auto i=0; i<idxs.size(); i++) {
+			add = idxs[i];
+			for (auto j=i+1; j<idxs.size(); j++) {
+				add *= max_idxs[j];
 			};
+			ret += add;
 		};
-		return true;
+		return ret;
 	};
 
+	// Set from linear
+	void IdxSet::set_from_linear(int idx_linear) {
+		
+		// Check that each idx is not too great
+		for (auto i=0; i<idxs.size(); i++) {
+			if (idxs[i] > max_idxs[i] -1) {
+				std::cout << ">>> Error: IdxSet::set_from_linear <<< Idx: " << idxs[i] << " is greater than max: " << max_idxs[i]-1 << std::endl;
+				exit(EXIT_FAILURE);
+			};
+		};
+
+		// Determine the idxs
+		int pwr;
+		int idx_working = idx_linear;
+		for (auto dim=0; dim<max_idxs.size(); dim++) {
+			pwr = 1;
+			for (auto dim2=dim+1; dim2<max_idxs.size(); dim2++) {
+				pwr *= max_idxs[dim2];
+			};
+
+			// Add
+			idxs[dim] = int(idx_working/pwr);
+
+			// Remove
+			idx_working -= idxs[dim]*pwr;
+		};
+	};
+
+	// Comparator
+	bool operator <(const IdxSet& x, const IdxSet& y) {
+		return x.get_linear() < y.get_linear();
+	};
+	bool operator ==(const IdxSet& x, const IdxSet& y) {
+		return x.get_linear() == y.get_linear();
+	};
 
 
 

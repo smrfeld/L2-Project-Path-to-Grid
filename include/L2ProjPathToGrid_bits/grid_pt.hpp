@@ -13,14 +13,19 @@ namespace L2PG {
 	Index set
 	****************************************/
 
+	// Forward
+	class Dim;
+
 	struct IdxSet {
 		// Idxs
 		std::vector<int> idxs;
+		std::vector<int> max_idxs; // exlusive
 
 		// Constructors
 		IdxSet();
-		IdxSet(int no_idxs);
-		IdxSet(std::vector<int> idxs);
+		IdxSet(int no_idxs, int max_idx);
+		IdxSet(std::vector<std::shared_ptr<Dim>> dims);
+		IdxSet(std::vector<std::shared_ptr<Dim>> dims, std::vector<int> idxs);
 
 		// Accessors
 	    int operator[](int i) const;
@@ -28,9 +33,16 @@ namespace L2PG {
 
 		// Size
 		int size() const;
+
+		// Linear idx
+		int get_linear() const;
+
+		// Set from linear
+		void set_from_linear(int idx_linear);
 	};
 	// Comparator
 	bool operator <(const IdxSet& x, const IdxSet& y);
+	bool operator ==(const IdxSet& x, const IdxSet& y);
 
 	/****************************************
 	Interior grid pt
