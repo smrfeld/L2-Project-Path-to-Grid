@@ -578,6 +578,9 @@ namespace L2PG {
 	Get values
 	********************/
 
+	std::shared_ptr<GridPt> Projector::get_grid_point(std::vector<int> grid_idxs) const {
+		return get_grid_point(IdxSet(grid_idxs));
+	};
 	std::shared_ptr<GridPt> Projector::get_grid_point(IdxSet grid_idxs) const {
 		return _impl->get_grid_point(grid_idxs);
 	};
