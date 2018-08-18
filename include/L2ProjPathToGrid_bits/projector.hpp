@@ -8,12 +8,18 @@
 #include <vector>
 #endif
 
-
 /************************************
 * Namespace for L2PG
 ************************************/
 
 namespace L2PG {
+
+	/****************************************
+	Projector
+	****************************************/
+
+	class GridPt;
+	class IdxSet;
 
 	class Projector {
 
@@ -28,7 +34,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		Projector(int dim_grid, int no_pts_grid, int no_pts_path);
+		Projector(int dim_grid, std::vector<int> no_pts_dim, int no_pts_path);
 		Projector(const Projector& other);
 		Projector(Projector&& other);
 		Projector& operator=(const Projector &other);
@@ -43,7 +49,23 @@ namespace L2PG {
 		void read_path(std::string fname_path);
 
 		std::string get_fname_grid_points() const;
-		void read_grid_points(std::string fname_grid_points);
+		void read_grid(std::string fname_grid_points);
+
+		/********************
+		Get indexes
+		********************/
+
+		// Input: idx in each dim
+		int get_idx(IdxSet grid_idxs) const;
+		// Input: idx in the actual 1D vector
+		IdxSet get_idxs(int grid_idx) const; 
+
+		/********************
+		Get values
+		********************/
+
+		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPt> get_grid_point(int grid_idx) const;
 
 		/********************
 		Project

@@ -1,8 +1,12 @@
-#include "../include/l2_proj_path_to_grid.hpp"
+#include "../include/L2ProjPathToGrid_bits/projector.hpp"
+#include "../include/L2ProjPathToGrid_bits/grid_pt_out.hpp"
+#include "../include/L2ProjPathToGrid_bits/grid_pt.hpp"
+#include "../include/L2ProjPathToGrid_bits/data_pt.hpp"
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "cmath"
 
 /************************************
 * Namespace for L2PG
@@ -14,9 +18,6 @@ namespace L2PG {
 	Projector implementation
 	****************************************/
 
-	// Grid point
-	typedef std::vector<double> Pt;
-
 	class Projector::Impl {
 	private:
 
@@ -26,25 +27,20 @@ namespace L2PG {
 		// Dimension of the grid
 		int _dim_grid;
 
-		// Length of the path
-		int _no_pts_path;
+		// No pts in each dim of the grid
+		std::vector<int> _no_pts_dim;
 
 		// Size of the grid
 		int _no_pts_grid;
 
 		// Grid points
-		std::vector<Pt> _grid_pts;
+		std::vector<std::shared_ptr<GridPt>> _grid_pts;
 
-		// Path abcissas
-		std::vector<Pt> _path_abcissas;
+		// Length of the data
+		int _no_pts_data;
 
-		// Path ordinates
-		std::vector<double> _path_ordinates;
-
-		// Clear grid/abcissas/ordinates
-		void _clear_grid();
-		void _clear_abcissas();
-		void _clear_ordinates();
+		// Data
+		std::vector<std::shared_ptr<DataPt>> _data_pts;
 
 		// Constructor helpers
 		void _clean_up();
@@ -57,7 +53,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		Impl(int dim_grid, int no_pts_grid, int no_pts_path);
+		Impl(int dim_grid, std::vector<int> no_pts_dim, int no_pts_path);
 		Impl(const Impl& other);
 		Impl(Impl&& other);
 		Impl& operator=(const Impl &other);
@@ -72,7 +68,23 @@ namespace L2PG {
 		void read_path(std::string fname_path);
 
 		std::string get_fname_grid_points() const;
-		void read_grid_points(std::string fname_grid_points);
+		void read_grid(std::string fname_grid_points);
+
+		/********************
+		Get indexes
+		********************/
+
+		// Input: idx in each dim
+		int get_idx(IdxSet grid_idxs) const;
+		// Input: idx in the actual 1D vector
+		IdxSet get_idxs(int grid_idx) const; 
+
+		/********************
+		Get values
+		********************/
+
+		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPt> get_grid_point(int grid_idx) const;
 
 		/********************
 		Project
@@ -118,32 +130,25 @@ namespace L2PG {
 	Implementation
 	****************************************/
 
-	Projector::Impl::Impl(int dim_grid, int no_pts_grid, int no_pts_path) {
+	Projector::Impl::Impl(int dim_grid, std::vector<int> no_pts_dim, int no_pts_path) {
+		// Check dim
+		if (no_pts_dim.size() != dim_grid) {
+			std::cout << ">>> Error: Projector::Impl::Impl <<< Must specify no pts for each dimension." << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
 		// Store
 		_dim_grid = dim_grid;
-		_no_pts_grid = no_pts_grid;
-		_no_pts_path = no_pts_path;
+		_no_pts_data = no_pts_path;
+		_no_pts_dim = no_pts_dim;
+		_no_pts_grid = 1;
+		for (auto const &i: _no_pts_dim) {
+			_no_pts_grid *= i;
+		};
 
 		// Init
 		_fname_path = "";
 		_fname_grid_points = "";
-
-		// Grid
-		for (auto i=0; i<_no_pts_grid; i++) {
-			_grid_pts.push_back(Pt());
-			for (auto j=0; j<_dim_grid; j++) {
-				_grid_pts[i].push_back(0.0);
-			};
-		};
-
-		// Path
-		for (auto i=0; i<_no_pts_path; i++) {
-			_path_abcissas.push_back(Pt());
-			for (auto j=0; j<_dim_grid; j++) {
-				_path_abcissas[i].push_back(0.0);
-			};
-			_path_ordinates.push_back(0.0);
-		};
 	};
 	Projector::Impl::Impl(const Impl& other) {
 		_copy(other);
@@ -183,56 +188,23 @@ namespace L2PG {
 		_fname_path = other._fname_path;
 		_fname_grid_points = other._fname_grid_points;
 		_dim_grid = other._dim_grid;
-		_no_pts_path = other._no_pts_path;
+		_no_pts_data = other._no_pts_data;
 		_no_pts_grid = other._no_pts_grid;
 		_grid_pts = other._grid_pts;
-		_path_abcissas = other._path_abcissas;
-		_path_ordinates = other._path_ordinates;
+		_data_pts = other._data_pts;
 	};
 	void Projector::Impl::_move(Impl& other)
 	{
-		_fname_path = other._fname_path;
-		_fname_grid_points = other._fname_grid_points;
-		_dim_grid = other._dim_grid;
-		_no_pts_path = other._no_pts_path;
-		_no_pts_grid = other._no_pts_grid;
-		_grid_pts = other._grid_pts;
-		_path_abcissas = other._path_abcissas;
-		_path_ordinates = other._path_ordinates;
+		_copy(other);
 
 		// Reset other
 		other._fname_path = "";
 		other._fname_grid_points = "";
 		other._dim_grid = 0;
-		other._no_pts_path = 0;
+		other._no_pts_data = 0;
 		other._no_pts_grid = 0;
 		other._grid_pts.clear();
-		other._path_abcissas.clear();
-		other._path_ordinates.clear();
-	};
-
-	/********************
-	Clear grid/abcissas/ordinates
-	********************/
-
-	void Projector::Impl::_clear_grid() {
-		for (auto i=0; i<_no_pts_grid; i++) {
-			for (auto j=0; j<_dim_grid; j++) {
-				_grid_pts[i][j] = 0.0;
-			};
-		};
-	};
-	void Projector::Impl::_clear_abcissas() {
-		for (auto i=0; i<_no_pts_grid; i++) {
-			for (auto j=0; j<_dim_grid; j++) {
-				_path_abcissas[i][j] = 0.0;
-			};
-		};
-	};
-	void Projector::Impl::_clear_ordinates() {
-		for (auto i=0; i<_no_pts_grid; i++) {
-			_path_ordinates[i] = 0.0;
-		};
+		other._data_pts.clear();
 	};
 
 	/********************
@@ -243,14 +215,22 @@ namespace L2PG {
 		return _fname_path;
 	};
 	void Projector::Impl::read_path(std::string fname_path) {
+
+		// Check that a grid exists
+		if (_fname_grid_points == "") {
+			std::cerr << ">>> Error: Projector::Impl::read_path <<< must read a grid first!" << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
 		// Set
 		_fname_path = fname_path;
 
 		// Read
 
+		/*
+
 		// Clear old
-		_clear_abcissas();
-		_clear_ordinates();
+		_data_pts.clear();
 
 		// Open
 		std::ifstream f;
@@ -279,8 +259,8 @@ namespace L2PG {
 			if (line == "") { continue; };
 
 			// Check line no
-			if (i_line > _no_pts_path-1) {
-				std::cerr << ">>> Error: Projector::Impl::read_path <<< Line no: " << i_line << " is greater than the no pts specified for the path: " << _no_pts_path-1 << std::endl;
+			if (i_line > _no_pts_data-1) {
+				std::cerr << ">>> Error: Projector::Impl::read_path <<< Line no: " << i_line << " is greater than the no pts specified for the path: " << _no_pts_data-1 << std::endl;
 				exit(EXIT_FAILURE);
 			};
 
@@ -294,6 +274,8 @@ namespace L2PG {
 					std::cerr << ">>> Error: Projector::Impl::read_path <<< No pts specified seems incorrect - should be: " << _dim_grid << " abcissas and an ordinate." << std::endl;
 					exit(EXIT_FAILURE);
 				};
+
+				// std::cout << x[i] << " ";
 			};
 			// Ordinate
 			iss >> y;
@@ -301,6 +283,7 @@ namespace L2PG {
 				std::cerr << ">>> Error: Projector::Impl::read_path <<< No pts specified seems incorrect - should be: " << _dim_grid << " abcissas and an ordinate." << std::endl;
 				exit(EXIT_FAILURE);
 			};
+			// std::cout << y << std::endl;
 
 			// Put into vecs
 			for (auto i=0; i<_dim_grid; i++) {
@@ -319,23 +302,25 @@ namespace L2PG {
 		};
 
 		// Check line no
-		if (i_line != _no_pts_path) {
-			std::cerr << ">>> Error: Projector::Impl::read_path <<< Read: " << i_line << " lines but there were supposed to be: " << _no_pts_path << std::endl;
+		if (i_line != _no_pts_data) {
+			std::cerr << ">>> Error: Projector::Impl::read_path <<< Read: " << i_line << " lines but there were supposed to be: " << _no_pts_data << std::endl;
 			exit(EXIT_FAILURE);
 		};
+
+		*/
 	};
 
 	std::string Projector::Impl::get_fname_grid_points() const {
 		return _fname_grid_points;
 	};
-	void Projector::Impl::read_grid_points(std::string fname_grid_points) {
+	void Projector::Impl::read_grid(std::string fname_grid_points) {
 		// Set
 		_fname_grid_points = fname_grid_points;
 
 		// Read
 
 		// Clear old
-		_clear_grid();
+		_grid_pts.clear();
 
 		// Open
 		std::ifstream f;
@@ -353,6 +338,13 @@ namespace L2PG {
 			x.push_back("");
 		};
 
+		// For making the grid pts
+		IdxSet idxs(_dim_grid);
+		std::vector<double> abcissas;
+		for (auto i=0; i<_dim_grid; i++) {
+			abcissas.push_back(0.0);
+		};
+
 		// Line, etc
 		std::string line;
 		std::istringstream iss;
@@ -364,7 +356,7 @@ namespace L2PG {
 
 			// Check line no
 			if (i_line > _no_pts_grid-1) {
-				std::cerr << ">>> Error: Projector::Impl::read_grid_points <<< Line no: " << i_line << " is greater than the no pts specified for the grid: " << _no_pts_grid-1 << std::endl;
+				std::cerr << ">>> Error: Projector::Impl::read_grid <<< Line no: " << i_line << " is greater than the no pts specified for the grid: " << _no_pts_grid-1 << std::endl;
 				exit(EXIT_FAILURE);
 			};
 
@@ -373,17 +365,21 @@ namespace L2PG {
 
 			// Grid pts
 			for (auto i=0; i<_dim_grid; i++) {
+				// String
 				iss >> x[i];
 				if (x[i] == "") {
-					std::cerr << ">>> Error: Projector::Impl::read_grid_points <<< No pts specified seems incorrect - should be: " << _dim_grid << " values." << std::endl;
+					std::cerr << ">>> Error: Projector::Impl::read_grid <<< No pts specified seems incorrect - should be: " << _dim_grid << " values." << std::endl;
 					exit(EXIT_FAILURE);
 				};
+				// Val
+				abcissas[i] = atof(x[i].c_str());
 			};
 
-			// Put into vecs
-			for (auto i=0; i<_dim_grid; i++) {
-				_grid_pts[i_line][i] = atof(x[i].c_str());
-			};
+			// Get idx set
+			idxs = get_idxs(i_line);
+
+			// Put into vec
+			_grid_pts.push_back(std::make_shared<GridPt>(idxs, abcissas));
 
 			// Next line
 			i_line++;			
@@ -396,9 +392,81 @@ namespace L2PG {
 
 		// Check line no
 		if (i_line != _no_pts_grid) {
-			std::cerr << ">>> Error: Projector::Impl::read_grid_points <<< Read: " << i_line << " lines but there were supposed to be: " << _no_pts_grid << std::endl;
+			std::cerr << ">>> Error: Projector::Impl::read_grid <<< Read: " << i_line << " lines but there were supposed to be: " << _no_pts_grid << std::endl;
 			exit(EXIT_FAILURE);
 		};
+	};
+
+	/********************
+	Get indexes
+	********************/
+
+	// Input: idx in each dim
+	int Projector::Impl::get_idx(IdxSet grid_idxs) const {
+		// Check that no idxs = no dim
+		if (grid_idxs.size() != _dim_grid) {
+			std::cerr << ">>> Error: Projector::Impl::get_grid_point <<< No indexes should be equal to dimension of the grid: " << _dim_grid << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
+		// Check that each index does not go above the max dim
+		for (auto dim=0; dim<grid_idxs.size(); dim++) {
+			if (grid_idxs[dim] > _no_pts_dim[dim]-1) {
+				std::cerr << ">>> Error: Projector::Impl::get_grid_point <<< Index specified: " << grid_idxs[dim] << " in dim: " << dim << " should be less than: " << _no_pts_dim[dim]-1 << std::endl;
+				exit(EXIT_FAILURE);
+			};
+		};
+
+		// Find gridpoint by index
+		int grid_idx=0,add=0;
+		for (auto dim=0; dim<_dim_grid; dim++) {
+			add = grid_idxs[dim];
+			for (auto dim2=dim+1; dim2<_dim_grid; dim2++) {
+				add *= _no_pts_dim[dim2];
+			};
+			grid_idx += add;
+		};
+
+		return grid_idx;
+	};
+
+	// Input: idx in the actual 1D vector
+	IdxSet Projector::Impl::get_idxs(int grid_idx) const {
+		// Check that idx is not too great
+		if (grid_idx > _no_pts_grid-1) {
+			std::cerr << ">>> Error: Projector::Impl::get_idxs <<< Max idx is: " << _no_pts_grid-1 << " but specified was: " << grid_idx << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
+		// Determine the idxs
+		IdxSet grid_idxs(_dim_grid);
+		int pwr;
+		int grid_idx_working = grid_idx;
+		for (auto dim=0; dim<_dim_grid; dim++) {
+			pwr = 1;
+			for (auto dim2=dim+1; dim2<_dim_grid; dim2++) {
+				pwr *= _no_pts_dim[dim2];
+			};
+
+			// Add
+			grid_idxs[dim] = int(grid_idx_working/pwr);
+
+			// Remove
+			grid_idx_working -= grid_idxs.idxs.back()*pwr;
+		};
+
+		return grid_idxs;
+	};
+
+	/********************
+	Get values
+	********************/
+
+	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSet grid_idxs) const {
+		return _grid_pts[get_idx(grid_idxs)];
+	};
+	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(int grid_idx) const {
+		return _grid_pts[grid_idx];
 	};
 
 	/********************
@@ -462,7 +530,7 @@ namespace L2PG {
 	Constructor
 	********************/
 
-	Projector::Projector(int dim_grid, int no_pts_grid, int no_pts_path) : _impl(new Impl(dim_grid, no_pts_grid, no_pts_path)) {};
+	Projector::Projector(int dim_grid, std::vector<int> no_pts_dim, int no_pts_path) : _impl(new Impl(dim_grid, no_pts_dim, no_pts_path)) {};
 	Projector::Projector(const Projector& other) : _impl(new Impl(*other._impl)) {};
 	Projector::Projector(Projector&& other) : _impl(std::move(other._impl)) {};
 	Projector& Projector::operator=(const Projector &other) {
@@ -489,8 +557,32 @@ namespace L2PG {
 	std::string Projector::get_fname_grid_points() const {
 		return _impl->get_fname_grid_points();
 	};
-	void Projector::read_grid_points(std::string fname_grid_points) {
-		_impl->read_grid_points(fname_grid_points);
+	void Projector::read_grid(std::string fname_grid_points) {
+		_impl->read_grid(fname_grid_points);
+	};
+
+	/********************
+	Get indexes
+	********************/
+
+	// Input: idx in each dim
+	int Projector::get_idx(IdxSet grid_idxs) const {
+		return _impl->get_idx(grid_idxs);
+	};
+	// Input: idx in the actual 1D vector
+	IdxSet Projector::get_idxs(int grid_idx) const {
+		return _impl->get_idxs(grid_idx);
+	};
+
+	/********************
+	Get values
+	********************/
+
+	std::shared_ptr<GridPt> Projector::get_grid_point(IdxSet grid_idxs) const {
+		return _impl->get_grid_point(grid_idxs);
+	};
+	std::shared_ptr<GridPt> Projector::get_grid_point(int grid_idx) const {
+		return _impl->get_grid_point(grid_idx);
 	};
 
 	/********************

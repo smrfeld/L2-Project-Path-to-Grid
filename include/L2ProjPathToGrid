@@ -1,0 +1,9 @@
+#ifndef L2_PROJ_PATH_TO_GRID_H
+#define L2_PROJ_PATH_TO_GRID_H
+
+#include "L2ProjPathToGrid_bits/data_pt.hpp"
+#include "L2ProjPathToGrid_bits/grid_pt_out.hpp"
+#include "L2ProjPathToGrid_bits/grid_pt.hpp"
+#include "L2ProjPathToGrid_bits/projector.hpp"
+
+#endif

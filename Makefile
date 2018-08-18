@@ -17,7 +17,10 @@ INSTALL_LIB_DIR = /usr/local/lib
 INSTALL_INCLUDE_DIR = /usr/local/include
 
 # source files
-SRC_NAMES = l2_proj_path_to_grid.cpp 
+SRC_NAMES = data_pt.cpp \
+	grid_pt_out.cpp \
+	grid_pt.cpp \
+	projector.cpp 
 SRCS = $(addprefix $(SOURCE_DIR)/, $(SRC_NAMES))
 OBJS = $(addprefix $(BUILD_DIR)/, $(SRC_NAMES:.cpp=.o))
 DEPS = $(OBJS:.o=.d)
@@ -47,6 +50,7 @@ clean:
 install:
 	mkdir -p $(INSTALL_LIB_DIR)
 	mkdir -p $(INSTALL_INCLUDE_DIR)
-	mkdir -p $(INSTALL_INCLUDE_DIR)/MCellLearn_bits
+	mkdir -p $(INSTALL_INCLUDE_DIR)/L2ProjPathToGrid_bits
 	cp -p $(TARGET_LIB) $(INSTALL_LIB_DIR)
-	cp -p include/*.hpp $(INSTALL_INCLUDE_DIR)
+	cp -p include/L2ProjPathToGrid_bits/*.hpp $(INSTALL_INCLUDE_DIR)/L2ProjPathToGrid_bits
+	cp -p include/L2ProjPathToGrid $(INSTALL_INCLUDE_DIR)
