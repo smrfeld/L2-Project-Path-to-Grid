@@ -117,7 +117,7 @@ namespace L2PG {
 		Get grid points surrounding a point
 		********************/
 
-		std::pair<bool,std::map<IdxSet, GridPt>> get_surrounding_2(std::vector<double> abcissas) const;
+		std::map<IdxSet, std::shared_ptr<GridPt>> get_surrounding_2(std::vector<double> abscissas) const;
 
 		/********************
 		Project

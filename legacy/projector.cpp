@@ -49,23 +49,6 @@ namespace L2PG {
 		return _pts;
 	};
 
-	std::pair<bool,std::pair<int,int>> Dim::get_surrounding_idxs(double pt) const {
-		if (pt < _start_pt || pt > _end_pt) {
-			// Outside
-			return std::make_pair(false,std::make_pair(0,0));
-		};
-
-		int idx;
-		if (pt == _end_pt) {
-			// At end
-			idx = _no_pts-2;
-		} else {
-			idx = int((pt - _start_pt) / _spacing);
-		};
-
-		return std::make_pair(true,std::make_pair(idx,idx+1));
-	};
-
 	/****************************************
 	Projector implementation
 	****************************************/
@@ -100,9 +83,9 @@ namespace L2PG {
 		Make grid
 		********************/
 
-		void _make_grid_pts();
+		void _make_grid();
 
-		void _iterate_make_grid_pt(IdxSet &grid_pt_idxs, int dim);
+		void _iterate_grid_pt(IdxSet &grid_pt_idxs, int dim);
 
 		/********************
 		Make outside grid points
@@ -110,14 +93,8 @@ namespace L2PG {
 
 		void _make_outside_grid_pts();
 
-		void _iterate_make_grid_pt_outside(IdxSet &grid_pt_idxs, IdxSet &idxs_of_dims_outside, int dim);
+		void _iterate_grid_pt_outside(IdxSet &grid_pt_idxs, IdxSet &idxs_of_dims_outside, int dim);
 		void _iterate_which_dim_are_outside(IdxSet &idxs_of_dims_outside, int idx, int no_dim_outside);
-
-		/********************
-		Get surrounding
-		********************/
-
-		void _iterate_get_surrounding_2(IdxSet &idxs_local, IdxSet &idxs_lower, IdxSet &idxs_upper, std::map<IdxSet, std::shared_ptr<GridPt>> &map, int dim) const;
 
 		// Constructor helpers
 		void _clean_up();
@@ -138,13 +115,6 @@ namespace L2PG {
 		~Impl();
 
 		/********************
-		Get dims
-		********************/
-
-		int get_no_dims() const;
-		std::vector<std::shared_ptr<Dim>> get_dims() const;
-
-		/********************
 		Files
 		********************/
 
@@ -153,6 +123,15 @@ namespace L2PG {
 
 		std::string get_fname_grid_points() const;
 		void read_grid(std::string fname_grid_points);
+
+		/********************
+		Get indexes
+		********************/
+
+		// Input: idx in each dim
+		int get_idx(IdxSet grid_idxs) const;
+		// Input: idx in the actual 1D vector
+		IdxSet get_idxs(int grid_idx) const; 
 
 		/********************
 		Get grid points
@@ -165,12 +144,6 @@ namespace L2PG {
 		********************/
 
 		std::vector<std::shared_ptr<GridPt>> get_neighbors(IdxSet grid_idxs) const;
-
-		/********************
-		Get grid points surrounding a point
-		********************/
-
-		std::map<IdxSet, std::shared_ptr<GridPt>> get_surrounding_2(std::vector<double> abscissas) const;
 
 		/********************
 		Project
@@ -226,8 +199,7 @@ namespace L2PG {
 		};
 
 		// Make grid
-		_make_grid_pts();
-		_make_outside_grid_pts();
+		_make_grid();
 
 		// Init
 		_no_pts_data = 0;
@@ -290,27 +262,19 @@ namespace L2PG {
 	};
 
 	/********************
-	Get dims
-	********************/
-
-	int Projector::Impl::get_no_dims() const {
-		return _dims.size();
-	};
-	std::vector<std::shared_ptr<Dim>> Projector::Impl::get_dims() const {
-		return _dims;
-	};
-
-	/********************
 	Files
 	********************/
 
 	void Projector::Impl::read_path(std::string fname_path) {
 
 		// Check that a grid exists
-		if (_grid_pts.size() == 0) {
+		if (_fname_grid_points == "") {
 			std::cerr << ">>> Error: Projector::Impl::read_path <<< must read a grid first!" << std::endl;
 			exit(EXIT_FAILURE);
 		};
+
+		// Set
+		_fname_path = fname_path;
 
 		// Read
 
@@ -358,7 +322,7 @@ namespace L2PG {
 			for (auto i=0; i<_dim_grid; i++) {
 				iss >> x[i];
 				if (x[i] == "") {
-					std::cerr << ">>> Error: Projector::Impl::read_path <<< No pts specified seems incorrect - should be: " << _dim_grid << " abscissas and an ordinate." << std::endl;
+					std::cerr << ">>> Error: Projector::Impl::read_path <<< No pts specified seems incorrect - should be: " << _dim_grid << " abcissas and an ordinate." << std::endl;
 					exit(EXIT_FAILURE);
 				};
 
@@ -367,14 +331,14 @@ namespace L2PG {
 			// Ordinate
 			iss >> y;
 			if (y == "") {
-				std::cerr << ">>> Error: Projector::Impl::read_path <<< No pts specified seems incorrect - should be: " << _dim_grid << " abscissas and an ordinate." << std::endl;
+				std::cerr << ">>> Error: Projector::Impl::read_path <<< No pts specified seems incorrect - should be: " << _dim_grid << " abcissas and an ordinate." << std::endl;
 				exit(EXIT_FAILURE);
 			};
 			// std::cout << y << std::endl;
 
 			// Put into vecs
 			for (auto i=0; i<_dim_grid; i++) {
-				_path_abscissas[i_line][i] = atof(x[i].c_str());
+				_path_abcissas[i_line][i] = atof(x[i].c_str());
 			};
 			_path_ordinates[i_line] = atof(y.c_str());
 
@@ -401,40 +365,95 @@ namespace L2PG {
 	Make grid
 	********************/
 
-	void Projector::Impl::_make_grid_pts() {
+	void Projector::Impl::_make_grid() {
+		// Read
+
 		// Clear old
 		_grid_pts.clear();
 
-		// Iterate
-		IdxSet grid_pt_idxs(_dims);
-		_iterate_make_grid_pt(grid_pt_idxs,0);
-	};
+		// Open
+		std::ifstream f;
+		f.open(_fname_grid_points);
 
-	void Projector::Impl::_iterate_make_grid_pt(IdxSet &grid_pt_idxs, int dim) {
-		if (dim != _dim_grid) {
-			// Deeper!
-			for (grid_pt_idxs[dim]=0; grid_pt_idxs[dim]<_dims[dim]->get_no_pts(); grid_pt_idxs[dim]++) {
-				_iterate_make_grid_pt(grid_pt_idxs, dim+1);
-			};
-		} else {
-			// Do something
-
-			// Make the abscissa
-			std::vector<double> abscissas;
-			for (auto dim2=0; dim2<_dim_grid; dim2++) {
-				abscissas.push_back(_dims[dim2]->get_pt_at_idx(grid_pt_idxs[dim2]));
-			};
-
-			// Make the grid pt
-			_grid_pts[grid_pt_idxs] = std::make_shared<GridPt>(grid_pt_idxs,abscissas);
+		// Make sure we found it
+		if (!f.is_open()) {
+			std::cerr << ">>> Error: Projector::Impl::read_path <<< could not open file: " << _fname_grid_points << std::endl;
+			exit(EXIT_FAILURE);
 		};
+
+		// Strings for the pts
+		std::vector<std::string> x;
+		for (auto i=0; i<_dim_grid; i++) {
+			x.push_back("");
+		};
+
+		// For making the grid pts
+		IdxSet idxs(_dim_grid);
+		std::vector<double> abcissas;
+		for (auto i=0; i<_dim_grid; i++) {
+			abcissas.push_back(0.0);
+		};
+
+		// Line, etc
+		std::string line;
+		std::istringstream iss;
+		int i_line=0;
+		while (getline(f,line)) {
+
+			// Skip empty
+			if (line == "") { continue; };
+
+			// Check line no
+			if (i_line > _no_pts_grid-1) {
+				std::cerr << ">>> Error: Projector::Impl::read_grid <<< Line no: " << i_line << " is greater than the no pts specified for the grid: " << _no_pts_grid-1 << std::endl;
+				exit(EXIT_FAILURE);
+			};
+
+			// Get
+			iss = std::istringstream(line);
+
+			// Grid pts
+			for (auto i=0; i<_dim_grid; i++) {
+				// String
+				iss >> x[i];
+				if (x[i] == "") {
+					std::cerr << ">>> Error: Projector::Impl::read_grid <<< No pts specified seems incorrect - should be: " << _dim_grid << " values." << std::endl;
+					exit(EXIT_FAILURE);
+				};
+				// Val
+				abcissas[i] = atof(x[i].c_str());
+			};
+
+			// Get idx set
+			idxs = get_idxs(i_line);
+
+			// Put into vec
+			_grid_pts[idxs] = std::make_shared<GridPt>(idxs, abcissas);
+
+			// Next line
+			i_line++;			
+
+			// Reset line string		
+			for (auto i=0; i<_dim_grid; i++) {
+				x[i] = "";
+			};
+		};
+
+		// Check line no
+		if (i_line != _no_pts_grid) {
+			std::cerr << ">>> Error: Projector::Impl::read_grid <<< Read: " << i_line << " lines but there were supposed to be: " << _no_pts_grid << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
+		// Next: make the outside grid points
+		_make_outside_grid();
 	};
 
 	/********************
 	Make outside grid points
 	********************/
 
-	void Projector::Impl::_make_outside_grid_pts() {
+	void Projector::Impl::_make_outside_grid() {
 		// Different kinds of outside points:
 		// Only 1 dim is outside
 		// 2 dims are outside
@@ -445,13 +464,13 @@ namespace L2PG {
 		// Max = _dim_grid
 		for (int no_outside=1; no_outside <= _dim_grid; no_outside++) {
 			// The idxs of the grid point that are outside
-			IdxSet idxs_of_dims_outside(no_outside, _dim_grid);
+			IdxSet idxs_of_dims_outside(no_outside);
 			// Iterate
 			_iterate_which_dim_are_outside(idxs_of_dims_outside, 0, no_outside);
 		};	
 	};
 
-	void Projector::Impl::_iterate_make_grid_pt_outside(IdxSet &grid_pt_idxs, IdxSet &idxs_of_dims_outside, int dim) {
+	void Projector::Impl::_iterate_grid_pt_outside(IdxSet &grid_pt_idxs, IdxSet &idxs_of_dims_outside, int dim) {
 
 		if (dim != _dim_grid) {
 			// Further down!
@@ -462,15 +481,15 @@ namespace L2PG {
 				// Inside
 				// Loop all interior pts
 				for (grid_pt_idxs[dim]=0; grid_pt_idxs[dim]<_dims[dim]->get_no_pts(); grid_pt_idxs[dim]++) {
-					_iterate_make_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
+					_iterate_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
 				};
 			} else {
 				// Outside
 				// Loop just -1 and _dims[dim]->get_no_pts()
 				grid_pt_idxs[dim] = -1;
-				_iterate_make_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
+				_iterate_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
 				grid_pt_idxs[dim] = _dims[dim]->get_no_pts();
-				_iterate_make_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
+				_iterate_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
 			};
 
 		} else {
@@ -484,31 +503,11 @@ namespace L2PG {
 			std::cout << std::endl;
 			*/
 
-			// Make the abscissa
-			std::vector<double> abscissas;
-			for (auto dim2=0; dim2<_dim_grid; dim2++) {
-				abscissas.push_back(_dims[dim2]->get_pt_at_idx(grid_pt_idxs[dim2]));
-			};
+			// Determine the abscissa from the idxs
 
-			// Find the two pts
-			IdxSet p1_idxs(_dims), p2_idxs(_dims);
-			for (auto dim2=0; dim2<_dim_grid; dim2++) {
-				if (grid_pt_idxs[dim2] == -1) {
-					p1_idxs[dim2] = grid_pt_idxs[dim2] + 1;
-					p2_idxs[dim2] = grid_pt_idxs[dim2] + 2;
-				} else if (grid_pt_idxs[dim2] == _dims[dim2]->get_no_pts()) {
-					p1_idxs[dim2] = grid_pt_idxs[dim2] - 1;
-					p2_idxs[dim2] = grid_pt_idxs[dim2] - 2;
-				} else {
-					p1_idxs[dim2] = grid_pt_idxs[dim2];
-					p2_idxs[dim2] = grid_pt_idxs[dim2];
-				};
-			};
-			std::shared_ptr<GridPt> p1 = get_grid_point(p1_idxs);
-			std::shared_ptr<GridPt> p2 = get_grid_point(p2_idxs);
 
 			// Make the outside grid point
-			_grid_pts_out[grid_pt_idxs] = std::make_shared<GridPtOut>(grid_pt_idxs,abscissas,p1,p2);
+
 		};
 	};
 
@@ -544,9 +543,70 @@ namespace L2PG {
 			*/
 
 			// Go over all possible grid points satisfying having this many outside points
-			IdxSet grid_pt_idxs(_dims);
-			_iterate_make_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,0);
+			IdxSet grid_pt_idxs(_dim_grid);
+			_iterate_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,0);
 		};
+	};
+
+	/********************
+	Get indexes
+	********************/
+
+	// Input: idx in each dim
+	int Projector::Impl::get_idx(IdxSet grid_idxs) const {
+		// Check that no idxs = no dim
+		if (grid_idxs.size() != _dim_grid) {
+			std::cerr << ">>> Error: Projector::Impl::get_grid_point <<< No indexes should be equal to dimension of the grid: " << _dim_grid << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
+		// Check that each index does not go above the max dim
+		for (auto dim=0; dim<grid_idxs.size(); dim++) {
+			if (grid_idxs[dim] > _dims[dim]->get_no_pts()-1) {
+				std::cerr << ">>> Error: Projector::Impl::get_grid_point <<< Index specified: " << grid_idxs[dim] << " in dim: " << dim << " should be less than: " << _dims[dim]->get_no_pts()-1 << std::endl;
+				exit(EXIT_FAILURE);
+			};
+		};
+
+		// Find gridpoint by index
+		int grid_idx=0,add=0;
+		for (auto dim=0; dim<_dim_grid; dim++) {
+			add = grid_idxs[dim];
+			for (auto dim2=dim+1; dim2<_dim_grid; dim2++) {
+				add *= _dims[dim2]->get_no_pts();
+			};
+			grid_idx += add;
+		};
+
+		return grid_idx;
+	};
+
+	// Input: idx in the actual 1D vector
+	IdxSet Projector::Impl::get_idxs(int grid_idx) const {
+		// Check that idx is not too great
+		if (grid_idx > _no_pts_grid-1) {
+			std::cerr << ">>> Error: Projector::Impl::get_idxs <<< Max idx is: " << _no_pts_grid-1 << " but specified was: " << grid_idx << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
+		// Determine the idxs
+		IdxSet grid_idxs(_dim_grid);
+		int pwr;
+		int grid_idx_working = grid_idx;
+		for (auto dim=0; dim<_dim_grid; dim++) {
+			pwr = 1;
+			for (auto dim2=dim+1; dim2<_dim_grid; dim2++) {
+				pwr *= _dims[dim2]->get_no_pts();
+			};
+
+			// Add
+			grid_idxs[dim] = int(grid_idx_working/pwr);
+
+			// Remove
+			grid_idx_working -= grid_idxs.idxs.back()*pwr;
+		};
+
+		return grid_idxs;
 	};
 
 	/********************
@@ -562,76 +622,13 @@ namespace L2PG {
 	********************/
 
 	std::vector<std::shared_ptr<GridPt>> Projector::Impl::get_neighbors(IdxSet grid_idxs) const {
-		// Check that it is not outside
 		IdxSet id = grid_idxs;
 		std::vector<std::shared_ptr<GridPt>> ret;
 		for (auto dim=0; dim<_dim_grid; dim++) {
-			// Get before and after!
+			// Before and after!
 			id[0] -= 1;
-
 		};
 		return ret;
-	};
-
-	/********************
-	Get grid points surrounding a point
-	********************/
-
-	std::map<IdxSet, std::shared_ptr<GridPt>> Projector::Impl::get_surrounding_2(std::vector<double> abscissas) const {
-		// Check size
-		if (abscissas.size() != _dim_grid) {
-			std::cerr << ">>> Error:Projector::Impl::get_surrounding_2 <<< Abscissa size should equal grid size." << std::endl;
-			exit(EXIT_FAILURE);
-		};
-
-		// Get bounding idxs
-		IdxSet idxs_lower(_dims), idxs_upper(_dims);
-		std::pair<bool,std::pair<int,int>> bounds;
-		for (auto dim=0; dim<_dim_grid; dim++) {
-			bounds = _dims[dim]->get_surrounding_idxs(abscissas[dim]);
-			if (!bounds.first) {
-				// Outside grid
-				std::cerr << ">>> Error:Projector::Impl::get_surrounding_2 <<< Abscissa in dim: " << dim << " value: " << abscissas[dim] << " is outside the grid: " << _dims[dim]->get_start_pt() << " to: " << _dims[dim]->get_end_pt() << std::endl;
-				exit(EXIT_FAILURE);
-			};
-
-			idxs_lower[dim] = bounds.second.first;
-			idxs_upper[dim] = bounds.second.second;
-		};
-
-		// Iterate to fill out the map
-		IdxSet idxs_local(_dim_grid,2);
-		std::map<IdxSet, std::shared_ptr<GridPt>> ret;
-		_iterate_get_surrounding_2(idxs_local,idxs_lower,idxs_upper,ret,0);
-
-		return ret;
-	};
-
-	void Projector::Impl::_iterate_get_surrounding_2(IdxSet &idxs_local, IdxSet &idxs_lower, IdxSet &idxs_upper, std::map<IdxSet, std::shared_ptr<GridPt>> &map, int dim) const {
-		if (dim != _dim_grid) {
-			// Deeper!
-			// Can be lower (=0) or higher (=+1) in this dim
-			idxs_local[dim] = 0;
-			_iterate_get_surrounding_2(idxs_local,idxs_lower,idxs_upper,map,dim+1);
-			idxs_local[dim] = 1;
-			_iterate_get_surrounding_2(idxs_local,idxs_lower,idxs_upper,map,dim+1);
-
-		} else {
-			// Do something
-
-			// Get grid point idxs
-			IdxSet idxs_grid_pt(_dims);
-			for (auto dim2=0; dim2<_dim_grid; dim2++) {
-				if (idxs_local[dim2] == 0) {
-					idxs_grid_pt[dim2] = idxs_lower[dim2];
-				} else {
-					idxs_grid_pt[dim2] = idxs_upper[dim2];
-				};
-			};
-
-			// Add to map
-			map[idxs_local] = get_grid_point(idxs_grid_pt);
-		};
 	};
 
 	/********************
@@ -709,22 +706,34 @@ namespace L2PG {
 	Projector::~Projector() = default;
 
 	/********************
-	Get dims
-	********************/
-
-	int Projector::get_no_dims() const {
-		return _impl->get_no_dims();
-	};
-	std::vector<std::shared_ptr<Dim>> Projector::get_dims() const {
-		return _impl->get_dims();
-	};
-
-	/********************
 	Files
 	********************/
 
+	std::string Projector::get_fname_path() const {
+		return _impl->get_fname_path();
+	};
 	void Projector::read_path(std::string fname_path) {
 		_impl->read_path(fname_path);
+	};
+
+	std::string Projector::get_fname_grid_points() const {
+		return _impl->get_fname_grid_points();
+	};
+	void Projector::read_grid(std::string fname_grid_points) {
+		_impl->read_grid(fname_grid_points);
+	};
+
+	/********************
+	Get indexes
+	********************/
+
+	// Input: idx in each dim
+	int Projector::get_idx(IdxSet grid_idxs) const {
+		return _impl->get_idx(grid_idxs);
+	};
+	// Input: idx in the actual 1D vector
+	IdxSet Projector::get_idxs(int grid_idx) const {
+		return _impl->get_idxs(grid_idx);
 	};
 
 	/********************
@@ -732,10 +741,13 @@ namespace L2PG {
 	********************/
 
 	std::shared_ptr<GridPt> Projector::get_grid_point(std::vector<int> grid_idxs) const {
-		return get_grid_point(IdxSet(get_dims(), grid_idxs));
+		return get_grid_point(IdxSet(grid_idxs));
 	};
 	std::shared_ptr<GridPt> Projector::get_grid_point(IdxSet grid_idxs) const {
-		return _impl->get_grid_point(grid_idxs);
+		return get_grid_point(grid_idxs);
+	};
+	std::shared_ptr<GridPt> Projector::get_grid_point(int grid_idx) const {
+		return _impl->get_grid_point(get_idxs(grid_idx));
 	};
 
 	/********************
@@ -746,18 +758,13 @@ namespace L2PG {
 		return get_neighbors(grid_pt->get_idxs());
 	};
 	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(std::vector<int> grid_idxs) const {
-		return get_neighbors(IdxSet(get_dims(), grid_idxs));
+		return get_neighbors(IdxSet(grid_idxs));
 	};
 	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(IdxSet grid_idxs) const {
 		return _impl->get_neighbors(grid_idxs);
 	};
-
-	/********************
-	Get grid points surrounding a point
-	********************/
-
-	std::map<IdxSet, std::shared_ptr<GridPt>> Projector::get_surrounding_2(std::vector<double> abscissas) const {
-		return _impl->get_surrounding_2(abscissas);
+	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(int grid_idx) const {
+		return get_neighbors(get_idxs(grid_idx));
 	};
 
 	/********************

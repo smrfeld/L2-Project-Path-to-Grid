@@ -40,9 +40,13 @@ namespace L2PG {
 		// Set from linear
 		void set_from_linear(int idx_linear);
 	};
+
 	// Comparator
 	bool operator <(const IdxSet& x, const IdxSet& y);
 	bool operator ==(const IdxSet& x, const IdxSet& y);
+
+	// Printing
+    std::ostream& operator<< (std::ostream& stream, const IdxSet& idxs);
 
 	/****************************************
 	Interior grid pt
@@ -86,5 +90,11 @@ namespace L2PG {
 		// Idxs
 		int get_idx(int dim) const;
 		IdxSet get_idxs() const;
+
+		/********************
+		Print
+		********************/
+
+		std::string print_abscissa() const;
 	};
 };

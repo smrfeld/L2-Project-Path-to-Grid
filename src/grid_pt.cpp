@@ -2,6 +2,7 @@
 #include "../include/L2ProjPathToGrid_bits/projector.hpp"
 
 #include <iostream>
+#include <sstream>
 
 /************************************
 * Namespace for L2PG
@@ -96,6 +97,18 @@ namespace L2PG {
 		return x.get_linear() == y.get_linear();
 	};
 
+	// Printing
+	std::ostream& operator<<(std::ostream& stream, const IdxSet& idxs) {
+		stream << "(";
+		for (auto i=0; i<idxs.size(); i++) {
+			stream << idxs[i];
+			if (i != idxs.size()-1) {
+				stream << " ";
+			};
+		};
+		stream << ")";
+	    return stream;
+	 }
 
 
 
@@ -161,6 +174,12 @@ namespace L2PG {
 		// Idxs
 		int get_idx(int dim) const;
 		IdxSet get_idxs() const;
+
+		/********************
+		Print
+		********************/
+
+		std::string print_abscissa() const;
 
 	};
 
@@ -282,7 +301,22 @@ namespace L2PG {
 		return _idxs;
 	};
 
+	/********************
+	Print
+	********************/
 
+	std::string GridPt::Impl::print_abscissa() const {
+		std::ostringstream s;
+		s << "(";
+		for (auto dim=0; dim<_abcissas.size(); dim++) {
+			s << _abcissas[dim];
+			if (dim != _abcissas.size()-1) {
+				s << " ";
+			};
+		};
+		s << ")";
+		return s.str();
+	};
 
 
 
@@ -351,6 +385,14 @@ namespace L2PG {
 	};
 	IdxSet GridPt::get_idxs() const {
 		return _impl->get_idxs();
+	};
+
+	/********************
+	Print
+	********************/
+
+	std::string GridPt::print_abscissa() const {
+		return _impl->print_abscissa();
 	};
 
 };
