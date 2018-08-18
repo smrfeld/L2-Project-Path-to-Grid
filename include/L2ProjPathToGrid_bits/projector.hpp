@@ -61,12 +61,21 @@ namespace L2PG {
 		IdxSet get_idxs(int grid_idx) const; 
 
 		/********************
-		Get values
+		Get grid points
 		********************/
 
 		std::shared_ptr<GridPt> get_grid_point(std::vector<int> grid_idxs) const;
 		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
 		std::shared_ptr<GridPt> get_grid_point(int grid_idx) const;
+
+		/********************
+		Get neighbors
+		********************/
+
+		std::vector<std::shared_ptr<GridPt>> get_neighbors(std::shared_ptr<GridPt> grid_pt) const;
+		std::vector<std::shared_ptr<GridPt>> get_neighbors(std::vector<int> grid_idxs) const;
+		std::vector<std::shared_ptr<GridPt>> get_neighbors(IdxSet grid_idxs) const;
+		std::vector<std::shared_ptr<GridPt>> get_neighbors(int grid_idx) const;
 
 		/********************
 		Project

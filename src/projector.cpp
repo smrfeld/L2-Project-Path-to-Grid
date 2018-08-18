@@ -80,11 +80,16 @@ namespace L2PG {
 		IdxSet get_idxs(int grid_idx) const; 
 
 		/********************
-		Get values
+		Get grid points
 		********************/
 
-		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
 		std::shared_ptr<GridPt> get_grid_point(int grid_idx) const;
+
+		/********************
+		Get neighbors
+		********************/
+
+		std::vector<std::shared_ptr<GridPt>> get_neighbors(IdxSet grid_idxs) const;
 
 		/********************
 		Project
@@ -459,14 +464,25 @@ namespace L2PG {
 	};
 
 	/********************
-	Get values
+	Get grid point
 	********************/
 
-	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSet grid_idxs) const {
-		return _grid_pts[get_idx(grid_idxs)];
-	};
 	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(int grid_idx) const {
 		return _grid_pts[grid_idx];
+	};
+
+	/********************
+	Get neighbors
+	********************/
+
+	std::vector<std::shared_ptr<GridPt>> Projector::Impl::get_neighbors(IdxSet grid_idxs) const {
+		IdxSet id = grid_idxs;
+		std::vector<std::shared_ptr<GridPt>> ret;
+		for (auto dim=0; dim<_dim_grid; dim++) {
+			// Before and after!
+			//....
+		};
+		return ret;
 	};
 
 	/********************
@@ -575,17 +591,34 @@ namespace L2PG {
 	};
 
 	/********************
-	Get values
+	Get grid pts
 	********************/
 
 	std::shared_ptr<GridPt> Projector::get_grid_point(std::vector<int> grid_idxs) const {
 		return get_grid_point(IdxSet(grid_idxs));
 	};
 	std::shared_ptr<GridPt> Projector::get_grid_point(IdxSet grid_idxs) const {
-		return _impl->get_grid_point(grid_idxs);
+		return get_grid_point(grid_idxs);
 	};
 	std::shared_ptr<GridPt> Projector::get_grid_point(int grid_idx) const {
 		return _impl->get_grid_point(grid_idx);
+	};
+
+	/********************
+	Get neighbors
+	********************/
+
+	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(std::shared_ptr<GridPt> grid_pt) const {
+		return get_neighbors(grid_pt->get_idxs());
+	};
+	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(std::vector<int> grid_idxs) const {
+		return get_neighbors(IdxSet(grid_idxs));
+	};
+	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(IdxSet grid_idxs) const {
+		return _impl->get_neighbors(grid_idxs);
+	};
+	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(int grid_idx) const {
+		return get_neighbors(get_idxs(grid_idx));
 	};
 
 	/********************
