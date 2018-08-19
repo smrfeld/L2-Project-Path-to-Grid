@@ -489,9 +489,11 @@ namespace L2PG {
 			*/
 
 			// Make the abscissa
+			std::cout << "---" << std::endl;
 			std::vector<double> abscissas;
 			for (auto dim2=0; dim2<_dim_grid; dim2++) {
 				abscissas.push_back(_dims[dim2]->get_pt_at_idx(grid_pt_idxs[dim2]));
+				std::cout << grid_pt_idxs[dim2] << " " << abscissas.back() << std::endl;
 			};
 
 			// Find the two pts
