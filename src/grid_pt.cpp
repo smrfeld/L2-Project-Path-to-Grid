@@ -158,7 +158,7 @@ namespace L2PG {
 		for (auto i=0; i<_idxs.size(); i++) {
 			add = _idxs[i];
 
-			// Add 1 for outside because starts at -1
+			// Add 1 for outside because starts at -1 instead of 0
 			if (_outside) {
 				add += 1;
 			};
@@ -168,14 +168,32 @@ namespace L2PG {
 			};
 			ret += add;
 		};
+
+		// Now from 0 to something
+		// If outside, make go from -1 to - something-1
+		// This way, all idxs are unique!
+		if (_outside) {
+			ret *= -1;
+			ret -= 1;
+		};
+		
 		return ret;
 	};
 
 	// Set from linear
 	void IdxSetKey::set_from_linear(int idx_linear) {
+		int idx_working = idx_linear;
+
+		// Inside = 0 to something = OK
+		// Outside = -something-1 to -1
+		// Convert back to 0 to something
+		if (_outside) {
+			idx_working += 1;
+			idx_working *= -1;
+		};
+
 		// Determine the idxs
 		int pwr;
-		int idx_working = idx_linear;
 		for (auto dim=0; dim<_no_idxs_possible.size(); dim++) {
 			pwr = 1;
 			for (auto dim2=dim+1; dim2<_no_idxs_possible.size(); dim2++) {
@@ -188,7 +206,7 @@ namespace L2PG {
 			// Remove
 			idx_working -= _idxs[dim]*pwr;
 
-			// Remove 1 for outside because starts at -1
+			// Remove 1 for outside because starts at -1 instead of 0
 			if (_outside) {
 				_idxs[dim] -= 1;
 			};
