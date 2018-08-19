@@ -154,11 +154,7 @@ namespace L2PG {
 		Files
 		********************/
 
-		std::string get_fname_path() const;
 		void read_path(std::string fname_path);
-
-		std::string get_fname_grid_points() const;
-		void read_grid(std::string fname_grid_points);
 
 		/********************
 		Get grid points
@@ -319,18 +315,16 @@ namespace L2PG {
 
 		// Read
 
-		/*
-
 		// Clear old
 		_data_pts.clear();
 
 		// Open
 		std::ifstream f;
-		f.open(_fname_path);
+		f.open(fname_path);
 
 		// Make sure we found it
 		if (!f.is_open()) {
-			std::cerr << ">>> Error: Projector::Impl::read_path <<< could not open file: " << _fname_path << std::endl;
+			std::cerr << ">>> Error: Projector::Impl::read_path <<< could not open file: " << fname_path << std::endl;
 			exit(EXIT_FAILURE);
 		};
 
@@ -341,7 +335,14 @@ namespace L2PG {
 			x.push_back("");
 		};
 
+		// Abscissa vector
+		std::vector<double> abscissas;
+		for (auto i=0; i<_dim_grid; i++) {
+			abscissas.push_back(0.0);
+		};
+
 		// Line, etc
+		Nbr4 nbr4;
 		std::string line;
 		std::istringstream iss;
 		int i_line=0;
@@ -349,12 +350,6 @@ namespace L2PG {
 
 			// Skip empty
 			if (line == "") { continue; };
-
-			// Check line no
-			if (i_line > _no_pts_data-1) {
-				std::cerr << ">>> Error: Projector::Impl::read_path <<< Line no: " << i_line << " is greater than the no pts specified for the path: " << _no_pts_data-1 << std::endl;
-				exit(EXIT_FAILURE);
-			};
 
 			// Get
 			iss = std::istringstream(line);
@@ -368,6 +363,8 @@ namespace L2PG {
 				};
 
 				// std::cout << x[i] << " ";
+
+				abscissas[i] = atof(x[i].c_str());
 			};
 			// Ordinate
 			iss >> y;
@@ -377,11 +374,11 @@ namespace L2PG {
 			};
 			// std::cout << y << std::endl;
 
-			// Put into vecs
-			for (auto i=0; i<_dim_grid; i++) {
-				_path_abscissas[i_line][i] = atof(x[i].c_str());
-			};
-			_path_ordinates[i_line] = atof(y.c_str());
+			// Get the neighborhood of this pt
+			nbr4 = get_surrounding_4(abscissas);
+
+			// Put into vec
+			_data_pts.push_back(std::make_shared<DataPt>(abscissas,atof(y.c_str()),nbr4));
 
 			// Next line
 			i_line++;			
@@ -393,13 +390,8 @@ namespace L2PG {
 			y = "";
 		};
 
-		// Check line no
-		if (i_line != _no_pts_data) {
-			std::cerr << ">>> Error: Projector::Impl::read_path <<< Read: " << i_line << " lines but there were supposed to be: " << _no_pts_data << std::endl;
-			exit(EXIT_FAILURE);
-		};
-
-		*/
+		// Set line nos
+		_no_pts_data = _data_pts.size();
 	};
 
 	/********************
@@ -732,7 +724,41 @@ namespace L2PG {
 	********************/
 
 	void Projector::Impl::write_solution(std::string fname) const {
+		std::ofstream f;
 
+		// Open
+		f.open(fname);
+
+		// Make sure we found it
+		if (!f.is_open()) {
+			std::cerr << ">>> Error: Projector::Impl::write_solution <<< could not write to file: " << fname << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
+		// Go through all grid pts
+		std::vector<double> abscissas;
+		double ordinate;
+		int i_count = 0;
+		for (auto &pr: _grid_pts) {
+
+			// Get
+			abscissas = pr.second->get_abscissas();
+			ordinate = pr.second->get_ordinate();
+
+			// Write
+			for (auto dim=0; dim<_dim_grid; dim++) {
+				f << abscissas[dim] << " ";
+			};
+			f << ordinate;
+
+			if (i_count != _grid_pts.size()-1) {
+				f << "\n";
+			};
+			i_count++;
+		};
+
+		// Close
+		f.close();
 	};
 
 

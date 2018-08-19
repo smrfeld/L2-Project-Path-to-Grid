@@ -25,7 +25,7 @@ int main() {
 
 	// Get linear idx
 	cout << "> Linear idx of (1,3): " << IdxSetKey(IdxSet({1,3}),GridPtType::INSIDE,dims).get_linear() << endl;
-	cout << "> Linear idx of (0,-1): " << IdxSetKey(IdxSet({-1,1}),GridPtType::OUTSIDE,dims).get_linear() << endl;
+	cout << "> Linear idx of (-1,0): " << IdxSetKey(IdxSet({-1,0}),GridPtType::OUTSIDE,dims).get_linear() << endl;
 
 	// Get surrounding 2 pts
 	cout << "> Getting surrounding 2 (0.02,0.74):" << endl;
@@ -66,8 +66,13 @@ int main() {
 	};
 
 	// Read path
-	// cout << "> Reading path" << endl;
-	// proj.read_path("path.txt");
+	cout << "> Reading path" << endl;
+	proj.read_path("path.txt");
+
+	// Write solution
+	cout << "> Writing solution" << endl;
+	proj.write_solution("solution.txt");
+
 
 	return 0;
 
