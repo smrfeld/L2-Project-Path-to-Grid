@@ -42,6 +42,8 @@ namespace L2PG {
 		std::map<IdxSetKey, std::shared_ptr<GridPtOut>> out;
 	};
 
+	class Dim;
+
 	class DataPt {
 
 	private:
@@ -55,7 +57,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4);
+		DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4, std::vector<std::shared_ptr<Dim>> dims);
 		DataPt(const DataPt& other);
 		DataPt(DataPt&& other);
 		DataPt& operator=(const DataPt &other);

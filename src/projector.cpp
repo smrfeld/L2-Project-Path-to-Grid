@@ -374,7 +374,7 @@ namespace L2PG {
 			nbr4 = get_surrounding_4(abscissas);
 
 			// Put into vec
-			_data_pts.push_back(std::make_shared<DataPt>(abscissas,atof(y.c_str()),nbr4));
+			_data_pts.push_back(std::make_shared<DataPt>(abscissas,atof(y.c_str()),nbr4,_dims));
 
 			// Next line
 			i_line++;			
