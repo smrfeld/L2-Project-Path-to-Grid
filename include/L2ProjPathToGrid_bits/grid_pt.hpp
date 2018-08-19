@@ -57,9 +57,8 @@ namespace L2PG {
 
 	private:
 
-		// Bool outside
-		// Add 1 for indexing
-		bool _outside;
+		// Inside or outside
+		GridPtType _type;
 
 		// Idxs
 		IdxSet _idxs;
@@ -72,7 +71,7 @@ namespace L2PG {
 		********************/
 
 		IdxSetKey(IdxSet idxs, int no_idxs_possible);
-		IdxSetKey(IdxSet idxs, GridPtType type, std::vector<std::shared_ptr<Dim>> dims);
+		IdxSetKey(IdxSet idxs, std::vector<std::shared_ptr<Dim>> dims);
 		/*
 		IdxSet(const IdxSet& other);
 		IdxSet(IdxSet&& other);
@@ -85,15 +84,8 @@ namespace L2PG {
 		Accessors
 		********************/
 
-		/*
-		int get_no_idxs_possible(int idx) const;
-
-		bool is_outside() const;
-		*/
-		/*
-		// Find
-		bool find(int val);
-		*/
+		// Type
+		GridPtType get_type() const;
 
 		// Linear idx
 		int get_linear() const;

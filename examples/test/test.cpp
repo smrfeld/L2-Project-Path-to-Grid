@@ -24,8 +24,8 @@ int main() {
 	cout << grid_pt->print_abscissa() << endl;
 
 	// Get linear idx
-	cout << "> Linear idx of (1,3): " << IdxSetKey(IdxSet({1,3}),GridPtType::INSIDE,dims).get_linear() << endl;
-	cout << "> Linear idx of (-1,0): " << IdxSetKey(IdxSet({-1,0}),GridPtType::OUTSIDE,dims).get_linear() << endl;
+	cout << "> Linear idx of (1,3): " << IdxSetKey(IdxSet({1,3}),dims).get_linear() << endl;
+	cout << "> Linear idx of (-1,0): " << IdxSetKey(IdxSet({-1,0}),dims).get_linear() << endl;
 
 	// Get surrounding 2 pts
 	cout << "> Getting surrounding 2 (0.02,0.74):" << endl;

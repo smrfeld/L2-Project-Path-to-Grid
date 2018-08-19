@@ -20,11 +20,6 @@ namespace L2PG {
 	class GridPtOut;
 	class IdxSetKey;
 
-	// Line of 2 grid pts
-	struct GridPtLine2 {
-		std::shared_ptr<GridPt> p1,p2;
-	};
-
 	// Line of 4 grid pts
 	struct GridPtLine4 {
 		// p1,p2 are in
@@ -87,7 +82,6 @@ namespace L2PG {
 		std::shared_ptr<GridPtOut> get_nbr4_outside(IdxSetKey idxs) const;
 
 		// Make lines in dim....
-		std::vector<GridPtLine2> get_grid_pt_lines_2(int line_dim) const;
 		std::vector<GridPtLine4> get_grid_pt_lines_4(int line_dim) const;
 	};
 

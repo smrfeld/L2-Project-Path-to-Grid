@@ -419,7 +419,7 @@ namespace L2PG {
 			};
 
 			// Make the grid pt
-			_grid_pts[IdxSetKey(grid_pt_idxs,GridPtType::INSIDE,_dims)] = std::make_shared<GridPt>(grid_pt_idxs,abscissas);
+			_grid_pts[IdxSetKey(grid_pt_idxs,_dims)] = std::make_shared<GridPt>(grid_pt_idxs,abscissas);
 		};
 	};
 
@@ -495,7 +495,7 @@ namespace L2PG {
 			std::shared_ptr<GridPt> p2 = get_grid_point(p2_idxs);
 
 			// Make the outside grid point
-			_grid_pts_out[IdxSetKey(grid_pt_idxs,GridPtType::OUTSIDE,_dims)] = std::make_shared<GridPtOut>(grid_pt_idxs,abscissas,p1,p2);
+			_grid_pts_out[IdxSetKey(grid_pt_idxs,_dims)] = std::make_shared<GridPtOut>(grid_pt_idxs,abscissas,p1,p2);
 			// std::cout << "Made outside pt: " << grid_pt_idxs << " = " << _grid_pts_out[IdxSetKey(grid_pt_idxs,GridPtType::OUTSIDE,_dims)]->print_abscissa() << std::endl;
 		};
 	};
@@ -545,7 +545,7 @@ namespace L2PG {
 		return _grid_pts;
 	};
 	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSet grid_idxs) const {
-		return _grid_pts.at(IdxSetKey(grid_idxs,GridPtType::INSIDE,_dims));
+		return _grid_pts.at(IdxSetKey(grid_idxs,_dims));
 	};
 	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSetKey key) const {
 		return _grid_pts.at(key);
@@ -555,7 +555,7 @@ namespace L2PG {
 		return _grid_pts_out;
 	};
 	std::shared_ptr<GridPtOut> Projector::Impl::get_grid_point_outside(IdxSet grid_idxs) const {
-		return _grid_pts_out.at(IdxSetKey(grid_idxs,GridPtType::OUTSIDE,_dims));
+		return _grid_pts_out.at(IdxSetKey(grid_idxs,_dims));
 	};
 	std::shared_ptr<GridPtOut> Projector::Impl::get_grid_point_outside(IdxSetKey key) const {
 		return _grid_pts_out.at(key);
@@ -618,7 +618,7 @@ namespace L2PG {
 			};
 
 			// Add to map
-			map[IdxSetKey(idxs_local,GridPtType::INSIDE,_dims)] = get_grid_point(idxs_grid_pt);
+			map[IdxSetKey(idxs_local,2)] = get_grid_point(idxs_grid_pt);
 		};
 	};
 
@@ -695,12 +695,13 @@ namespace L2PG {
 			};
 
 			// Add to nbr4
+			IdxSetKey key(idxs_local,4);
 			if (inside) {
-				nbr4.types[IdxSetKey(idxs_local,GridPtType::INSIDE,_dims)] = GridPtType::INSIDE;
-				nbr4.in[IdxSetKey(idxs_local,GridPtType::INSIDE,_dims)] = get_grid_point(idxs_grid_pt);
+				nbr4.types[key] = GridPtType::INSIDE;
+				nbr4.in[key] = get_grid_point(idxs_grid_pt);
 			} else {
-				nbr4.types[IdxSetKey(idxs_local,GridPtType::OUTSIDE,_dims)] = GridPtType::OUTSIDE;
-				nbr4.out[IdxSetKey(idxs_local,GridPtType::OUTSIDE,_dims)] = get_grid_point_outside(idxs_grid_pt);
+				nbr4.types[key] = GridPtType::OUTSIDE;
+				nbr4.out[key] = get_grid_point_outside(idxs_grid_pt);
 			};
 		};
 	};

@@ -33,6 +33,9 @@ namespace L2PG {
 		// Check if index set is valid
 		void _check_idx_set_valid(IdxSetKey idxs);
 
+		// Iterate for making lines
+		void _iterate_other_idxs_make_line(IdxSet &idxs, int dim, int line_dim);
+
 		// Constructor helpers
 		void _clean_up();
 		void _copy(const Impl& other);
@@ -71,7 +74,6 @@ namespace L2PG {
 		std::shared_ptr<GridPtOut> get_nbr4_outside(IdxSetKey idxs) const;
 
 		// Make lines in dim....
-		std::vector<GridPtLine2> get_grid_pt_lines_2(int line_dim) const;
 		std::vector<GridPtLine4> get_grid_pt_lines_4(int line_dim) const;
 
 	};
@@ -223,11 +225,88 @@ namespace L2PG {
 	};
 
 	// Make lines in dim....
-	std::vector<GridPtLine2> DataPt::Impl::get_grid_pt_lines_2(int line_dim) const {
+	std::vector<GridPtLine4> DataPt::Impl::get_grid_pt_lines_4(int line_dim) const {
+
+		std::vector<GridPtLine4> ret;
+
+		// If dim = 2
+		// Then 4 lines
+		//    line_dim = 0
+		//     evaluate at 4 different pts (x_line1,y), (x_line2,y), (x_line3,y), (x_line4,y)
+		//    line_dim = 1
+		//     evaluate at 4 different pts (x,y_line1), (x,y_line2), (x,y_line3), (x,y_line4)
+		
+		// If dim = 3
+		// Then 4x4 = 16 lines
+		// 
+		// Generally 4^(line_dim-1) lines
+
+		// Go through all dimensions other than line_dim
+		// vary the pt in line_dim, otherwise evaluate at the same
+
+		// Idxs of the pts
+		IdxSet idxs(_grid_dim);
+
+		// Iterate over all other idxs
+
+		// Vary the pt of the line_dim
+		for (idxs[line_dim]=0; idxs[line_dim]<4; idxs[line_dim]++) {
+
+			// Loop over the other idxs to vary
+			for (auto dim_other = 0; dim_other<_grid_dim; dim_other++) {
+				// Skip the line_dim
+				if (dim_other == line_dim) {
+					continue;
+				};
+
+				// 
+			};
+
+
+
+		};
+
+
 		return {};
 	};
-	std::vector<GridPtLine4> DataPt::Impl::get_grid_pt_lines_4(int line_dim) const {
-		return {};
+
+	void DataPt::Impl::_iterate_other_idxs_make_line(IdxSet &idxs, int dim, int line_dim) {
+
+		if (dim != _grid_dim) {
+			// Deeper!
+
+			if (dim == line_dim) {
+				// Skip; do not loop this idx
+				_iterate_other_idxs_make_line(idxs,dim+1,line_dim);
+			} else {
+				// Iterate all idxs in this dim
+				for (idxs[dim]=0; idxs[dim]<4; idxs[dim]++) {
+					_iterate_other_idxs_make_line(idxs,dim+1,line_dim);
+				};
+			};
+
+		} else {
+			// Do something
+
+			// Make the line
+
+			GridPtLine4 line4;
+
+			/*
+			// Iterate once more for the line_dim
+			for (idxs[line_dim]=0; idxs[line_dim]<4; idxs[line_dim]++) {
+
+				// Now we have a pt to add, given by idxs
+				
+				// Check the type of this pt
+
+				// Get it!
+				_nbr4[]
+
+			};
+			*/
+		};
+
 	};
 
 
@@ -317,9 +396,6 @@ namespace L2PG {
 	};
 
 	// Make lines in dim....
-	std::vector<GridPtLine2> DataPt::get_grid_pt_lines_2(int line_dim) const {
-		return _impl->get_grid_pt_lines_2(line_dim);
-	};
 	std::vector<GridPtLine4> DataPt::get_grid_pt_lines_4(int line_dim) const {
 		return _impl->get_grid_pt_lines_4(line_dim);
 	};
