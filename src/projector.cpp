@@ -450,7 +450,7 @@ namespace L2PG {
 		// Max = _dim_grid
 		for (int no_outside=1; no_outside <= _dim_grid; no_outside++) {
 			// The idxs of the grid point that are outside
-			IdxSet idxs_of_dims_outside(_dim_grid);
+			IdxSet idxs_of_dims_outside(no_outside);
 			// Iterate
 			_iterate_which_dim_are_outside(idxs_of_dims_outside, 0, no_outside);
 		};	
@@ -472,8 +472,10 @@ namespace L2PG {
 				// Outside
 				// Loop just -1 and _dims[dim]->get_no_pts()
 				grid_pt_idxs[dim] = -1;
+				// std::cout << "setting dim: " << dim << " to " << -1 << std::endl;
 				_iterate_make_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
 				grid_pt_idxs[dim] = _dims[dim]->get_no_pts();
+				//std::cout << "setting dim: " << dim << " to " << _dims[dim]->get_no_pts() << std::endl;
 				_iterate_make_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,dim+1);
 			};
 
@@ -481,19 +483,14 @@ namespace L2PG {
 			// Do something
 
 			// Print the outside grid pt idxs
-			/*
-			for (auto dim2=0; dim2<_dim_grid; dim2++) {
-				std::cout << grid_pt_idxs[dim2] << " ";
-			};
-			std::cout << std::endl;
-			*/
+			// std::cout << grid_pt_idxs << std::endl;
 
 			// Make the abscissa
-			std::cout << "---" << std::endl;
+			// std::cout << "---" << std::endl;
 			std::vector<double> abscissas;
 			for (auto dim2=0; dim2<_dim_grid; dim2++) {
 				abscissas.push_back(_dims[dim2]->get_pt_at_idx(grid_pt_idxs[dim2]));
-				std::cout << grid_pt_idxs[dim2] << " " << abscissas.back() << std::endl;
+				// std::cout << grid_pt_idxs[dim2] << " " << abscissas.back() << std::endl;
 			};
 
 			// Find the two pts
@@ -515,6 +512,7 @@ namespace L2PG {
 
 			// Make the outside grid point
 			_grid_pts_out[IdxSetKey(grid_pt_idxs,GridPtType::OUTSIDE,_dims)] = std::make_shared<GridPtOut>(grid_pt_idxs,abscissas,p1,p2);
+			std::cout << "Made outside pt: " << grid_pt_idxs << " = " << _grid_pts_out[IdxSetKey(grid_pt_idxs,GridPtType::OUTSIDE,_dims)]->print_abscissa() << std::endl;
 		};
 	};
 
@@ -541,13 +539,11 @@ namespace L2PG {
 			// Do something
 			
 			// Print which dims are outside
-			/*
-			std::cout << "Dims outside: ";
+			std::cout << ">>> Dims outside: ";
 			for (auto j_outside=0; j_outside<idxs_of_dims_outside.size(); j_outside++) {
 				std::cout << idxs_of_dims_outside[j_outside] << " ";
 			};
 			std::cout << "" << std::endl;
-			*/
 
 			// Go over all possible grid points satisfying having this many outside points
 			IdxSet grid_pt_idxs(_dim_grid);
