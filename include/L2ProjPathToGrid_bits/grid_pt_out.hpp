@@ -56,6 +56,12 @@ namespace L2PG {
 		// Get dependent points
 		std::shared_ptr<GridPt> get_dep_p1() const;
 		std::shared_ptr<GridPt> get_dep_p2() const;
+
+		/********************
+		Print
+		********************/
+
+		std::string print_abscissa() const;
 		
 	};
 

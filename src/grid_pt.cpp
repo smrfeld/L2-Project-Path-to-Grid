@@ -80,18 +80,25 @@ namespace L2PG {
 		};
 	};
 
-	// Printing
-	std::ostream& operator<<(std::ostream& stream, const IdxSet& idxs) {
+ 	// Print
+ 	std::string IdxSet::print() const {
+ 		std::ostringstream stream;
 		stream << "(";
-		for (auto i=0; i<idxs.size(); i++) {
-			stream << idxs[i];
-			if (i != idxs.size()-1) {
+		for (auto i=0; i<_idxs.size(); i++) {
+			stream << _idxs[i];
+			if (i != _idxs.size()-1) {
 				stream << " ";
 			};
 		};
 		stream << ")";
-	    return stream;
-	 }
+	    return stream.str();
+ 	};
+
+	// Printing
+	std::ostream& operator<<(std::ostream& stream, const IdxSet& idxs) {
+		stream << idxs.print();
+		return stream;
+	 };
 
 
 
@@ -187,6 +194,17 @@ namespace L2PG {
 			};
 		};
 	};
+ 
+ 	// Print
+ 	std::string IdxSetKey::print() const {
+ 		return _idxs.print();
+ 	};
+
+	// Printing
+	std::ostream& operator<<(std::ostream& stream, const IdxSetKey& idxs) {
+		stream << idxs.print();
+		return stream;
+	 };
 
 	// Comparator
 	bool operator <(const IdxSetKey& x, const IdxSetKey& y) {

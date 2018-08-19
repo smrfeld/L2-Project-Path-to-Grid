@@ -43,6 +43,8 @@ namespace L2PG {
 		int size() const;
 
 		bool find(int val);
+
+		std::string print() const;
 	};
 
 	// Printing
@@ -98,7 +100,12 @@ namespace L2PG {
 
 		// Set from linear
 		void set_from_linear(int idx_linear);
+
+		std::string print() const;
 	};
+
+	// Printing
+    std::ostream& operator<< (std::ostream& stream, const IdxSetKey& idxs);
 
 	// Comparator
 	bool operator <(const IdxSetKey& x, const IdxSetKey& y);

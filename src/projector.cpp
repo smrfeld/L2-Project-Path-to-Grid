@@ -43,7 +43,11 @@ namespace L2PG {
 	};
 
 	double Dim::get_pt_at_idx(int idx) const {
-		return _pts[idx];
+		if (idx >= 0 && idx <= _no_pts-1) {
+			return _pts[idx];
+		} else {
+			return _start_pt + idx*_spacing;
+		};
 	};
 	std::vector<double> Dim::get_pts() const {
 		return _pts;
@@ -836,7 +840,7 @@ namespace L2PG {
 		return _impl->get_surrounding_2(abscissas);
 	};
 	Nbr4 Projector::get_surrounding_4(std::vector<double> abscissas) const {
-		return get_surrounding_4(abscissas);
+		return _impl->get_surrounding_4(abscissas);
 	};
 
 	/********************

@@ -2,6 +2,7 @@
 #include "../include/L2ProjPathToGrid_bits/grid_pt.hpp"
 
 #include <iostream>
+#include <sstream>
 
 /************************************
 * Namespace for L2PG
@@ -63,6 +64,11 @@ namespace L2PG {
 		std::shared_ptr<GridPt> get_dep_p1() const;
 		std::shared_ptr<GridPt> get_dep_p2() const;
 
+		/********************
+		Print
+		********************/
+
+		std::string print_abscissa() const;
 	};
 
 
@@ -187,7 +193,22 @@ namespace L2PG {
 		return _p2;
 	};
 
+	/********************
+	Print
+	********************/
 
+	std::string GridPtOut::Impl::print_abscissa() const {
+		std::ostringstream s;
+		s << "(";
+		for (auto dim=0; dim<_abcissas.size(); dim++) {
+			s << _abcissas[dim];
+			if (dim != _abcissas.size()-1) {
+				s << " ";
+			};
+		};
+		s << ")";
+		return s.str();
+	};
 
 
 
@@ -261,6 +282,14 @@ namespace L2PG {
 	};
 	std::shared_ptr<GridPt> GridPtOut::get_dep_p2() const {
 		return _impl->get_dep_p2();
+	};
+
+	/********************
+	Print
+	********************/
+
+	std::string GridPtOut::print_abscissa() const {
+		return _impl->print_abscissa();
 	};
 
 };
