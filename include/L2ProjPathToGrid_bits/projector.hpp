@@ -96,10 +96,12 @@ namespace L2PG {
 		Get grid points
 		********************/
 
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> get_grid_points() const;
 		std::shared_ptr<GridPt> get_grid_point(std::vector<int> grid_idxs) const;
 		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
 		std::shared_ptr<GridPt> get_grid_point(IdxSetKey key) const;
 
+		std::map<IdxSetKey, std::shared_ptr<GridPtOut>> get_grid_points_outside() const;
 		std::shared_ptr<GridPtOut> get_grid_point_outside(std::vector<int> grid_idxs) const;
 		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSet grid_idxs) const;
 		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSetKey key) const;
@@ -116,12 +118,6 @@ namespace L2PG {
 		********************/
 
 		void project();
-
-		/********************
-		Get solution
-		********************/
-
-		std::vector<double> get_solution() const;
 
 		/********************
 		Write

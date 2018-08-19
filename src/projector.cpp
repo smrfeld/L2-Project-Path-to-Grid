@@ -160,9 +160,11 @@ namespace L2PG {
 		Get grid points
 		********************/
 
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> get_grid_points() const;
 		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
 		std::shared_ptr<GridPt> get_grid_point(IdxSetKey key) const;
 
+		std::map<IdxSetKey, std::shared_ptr<GridPtOut>> get_grid_points_outside() const;
 		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSet grid_idxs) const;
 		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSetKey key) const;
 
@@ -178,12 +180,6 @@ namespace L2PG {
 		********************/
 
 		void project();
-
-		/********************
-		Get solution
-		********************/
-
-		std::vector<double> get_solution() const;
 
 		/********************
 		Write
@@ -545,6 +541,9 @@ namespace L2PG {
 	Get grid point
 	********************/
 
+	std::map<IdxSetKey, std::shared_ptr<GridPt>> Projector::Impl::get_grid_points() const {
+		return _grid_pts;
+	};
 	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSet grid_idxs) const {
 		return _grid_pts.at(IdxSetKey(grid_idxs,GridPtType::INSIDE,_dims));
 	};
@@ -552,6 +551,9 @@ namespace L2PG {
 		return _grid_pts.at(key);
 	};
 
+	std::map<IdxSetKey, std::shared_ptr<GridPtOut>> Projector::Impl::get_grid_points_outside() const {
+		return _grid_pts_out;
+	};
 	std::shared_ptr<GridPtOut> Projector::Impl::get_grid_point_outside(IdxSet grid_idxs) const {
 		return _grid_pts_out.at(IdxSetKey(grid_idxs,GridPtType::OUTSIDE,_dims));
 	};
@@ -712,14 +714,6 @@ namespace L2PG {
 	};
 
 	/********************
-	Get solution
-	********************/
-
-	std::vector<double> Projector::Impl::get_solution() const {
-		return {};
-	};
-
-	/********************
 	Write
 	********************/
 
@@ -834,6 +828,9 @@ namespace L2PG {
 	Get grid pts
 	********************/
 
+	std::map<IdxSetKey, std::shared_ptr<GridPt>> Projector::get_grid_points() const {
+		return _impl->get_grid_points();
+	};
 	std::shared_ptr<GridPt> Projector::get_grid_point(std::vector<int> grid_idxs) const {
 		return get_grid_point(IdxSet(grid_idxs));
 	};
@@ -844,6 +841,9 @@ namespace L2PG {
 		return _impl->get_grid_point(key);
 	};
 
+	std::map<IdxSetKey, std::shared_ptr<GridPtOut>> Projector::get_grid_points_outside() const {
+		return _impl->get_grid_points_outside();
+	};
 	std::shared_ptr<GridPtOut> Projector::get_grid_point_outside(std::vector<int> grid_idxs) const {
 		return _impl->get_grid_point_outside(IdxSet(grid_idxs));
 	};
@@ -871,14 +871,6 @@ namespace L2PG {
 
 	void Projector::project() {
 		_impl->project();
-	};
-
-	/********************
-	Get solution
-	********************/
-
-	std::vector<double> Projector::get_solution() const {
-		return _impl->get_solution();
 	};
 
 	/********************
