@@ -176,6 +176,12 @@ namespace L2PG {
 		Nbr4 get_surrounding_4(std::vector<double> abscissas) const;
 
 		/********************
+		Get data points
+		********************/
+
+		std::vector<std::shared_ptr<DataPt>> get_data_points() const;
+
+		/********************
 		Project
 		********************/
 
@@ -374,7 +380,7 @@ namespace L2PG {
 			nbr4 = get_surrounding_4(abscissas);
 
 			// Put into vec
-			_data_pts.push_back(std::make_shared<DataPt>(abscissas,atof(y.c_str()),nbr4,_dims));
+			_data_pts.push_back(std::make_shared<DataPt>(abscissas,atof(y.c_str()),nbr4));
 
 			// Next line
 			i_line++;			
@@ -707,6 +713,14 @@ namespace L2PG {
 	};
 
 	/********************
+	Get data points
+	********************/
+
+	std::vector<std::shared_ptr<DataPt>> Projector::Impl::get_data_points() const {
+		return _data_pts;
+	};
+
+	/********************
 	Project
 	********************/
 
@@ -864,6 +878,14 @@ namespace L2PG {
 	};
 	Nbr4 Projector::get_surrounding_4(std::vector<double> abscissas) const {
 		return _impl->get_surrounding_4(abscissas);
+	};
+
+	/********************
+	Get data points
+	********************/
+
+	std::vector<std::shared_ptr<DataPt>> Projector::get_data_points() const {
+		return _impl->get_data_points();
 	};
 
 	/********************

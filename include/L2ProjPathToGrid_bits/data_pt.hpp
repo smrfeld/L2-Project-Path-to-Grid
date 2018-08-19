@@ -19,9 +19,10 @@ namespace L2PG {
 	class GridPt;
 	class GridPtOut;
 	class IdxSetKey;
+	class IdxSet;
 
 	// Line of 4 grid pts
-	struct GridPtLine4 {
+	struct Line4 {
 		// p1,p2 are in
 		std::shared_ptr<GridPt> p1,p2;
 
@@ -33,6 +34,9 @@ namespace L2PG {
 
 		// If p0,p3 are out
 		std::shared_ptr<GridPtOut> p0out, p3out;
+
+		// Print
+		std::string print() const;
 	};
 
 	// Neighborhood of points
@@ -40,6 +44,10 @@ namespace L2PG {
 		std::map<IdxSetKey, GridPtType> types;
 		std::map<IdxSetKey, std::shared_ptr<GridPt>> in;
 		std::map<IdxSetKey, std::shared_ptr<GridPtOut>> out;
+
+		// Get lines of 4 in some dim
+		std::vector<Line4> get_grid_pt_lines_4(int line_dim, int grid_dim) const;
+		void _iterate_other_idxs_make_line(IdxSet &idxs, int dim, int grid_dim, int line_dim, std::vector<Line4> &ret) const;
 	};
 
 	class Dim;
@@ -57,7 +65,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4, std::vector<std::shared_ptr<Dim>> dims);
+		DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4);
 		DataPt(const DataPt& other);
 		DataPt(DataPt&& other);
 		DataPt& operator=(const DataPt &other);
@@ -84,7 +92,7 @@ namespace L2PG {
 		std::shared_ptr<GridPtOut> get_nbr4_outside(IdxSetKey idxs) const;
 
 		// Make lines in dim....
-		std::vector<GridPtLine4> get_grid_pt_lines_4(int line_dim) const;
+		std::vector<Line4> get_grid_pt_lines_4(int line_dim) const;
 	};
 
 };

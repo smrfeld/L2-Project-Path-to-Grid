@@ -58,6 +58,7 @@ namespace L2PG {
 	class IdxSet;
 	class IdxSetKey;
 	struct Nbr4;
+	class DataPt;
 
 	class Projector {
 
@@ -112,6 +113,12 @@ namespace L2PG {
 
 		std::map<IdxSetKey, std::shared_ptr<GridPt>> get_surrounding_2(std::vector<double> abscissas) const;
 		Nbr4 get_surrounding_4(std::vector<double> abscissas) const;
+
+		/********************
+		Get data points
+		********************/
+
+		std::vector<std::shared_ptr<DataPt>> get_data_points() const;
 
 		/********************
 		Project

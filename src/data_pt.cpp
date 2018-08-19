@@ -3,12 +3,178 @@
 #include "../include/L2ProjPathToGrid_bits/grid_pt.hpp"
 
 #include <iostream>
+#include <sstream>
 
 /************************************
 * Namespace for L2PG
 ************************************/
 
 namespace L2PG {
+
+	/****************************************
+	Line4
+	****************************************/
+
+	/********************
+	Print line
+	********************/
+
+	std::string Line4::print() const {
+		std::ostringstream s;
+
+		if (p0type == GridPtType::INSIDE) {
+			s << p0in->print_abscissa() << " -> ";
+		} else {
+			s << p0out->print_abscissa() << " -> ";
+		};
+		s << p1->print_abscissa() << " -> ";
+		s << p2->print_abscissa() << " -> ";
+		if (p3type == GridPtType::INSIDE) {
+			s << p3in->print_abscissa();
+		} else {
+			s << p3out->print_abscissa();
+		};
+
+		return s.str();
+	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	/****************************************
+	Nbr4
+	****************************************/
+
+	/********************
+	Get lines of 4 in some dim
+	********************/
+
+	std::vector<Line4> Nbr4::get_grid_pt_lines_4(int line_dim, int grid_dim) const {
+		// To return
+		std::vector<Line4> ret;
+
+		// Idxs of the pts
+		IdxSet idxs(grid_dim);
+
+		// Iterate over all other idxs to make it
+		_iterate_other_idxs_make_line(idxs,0,grid_dim,line_dim,ret);
+
+		return ret;
+	};
+	void Nbr4::_iterate_other_idxs_make_line(IdxSet &idxs, int dim, int grid_dim, int line_dim, std::vector<Line4> &ret) const {
+
+		if (dim != grid_dim) {
+			// Deeper!
+
+			if (dim == line_dim) {
+				// Skip; do not loop this idx
+				_iterate_other_idxs_make_line(idxs,dim+1,grid_dim,line_dim,ret);
+			} else {
+				// Iterate all idxs in this dim
+				for (idxs[dim]=0; idxs[dim]<4; idxs[dim]++) {
+					_iterate_other_idxs_make_line(idxs,dim+1,grid_dim,line_dim,ret);
+				};
+			};
+
+		} else {
+			// Do something
+
+			// Make the line
+
+			Line4 line4;
+
+			// Iterate MANUALLY for the line_dim
+
+			// p0
+			idxs[line_dim] = 0;
+			IdxSetKey key(idxs,4);
+
+			// Check the type of this pt
+			line4.p0type = types.at(key);
+			if (line4.p0type == GridPtType::INSIDE) {
+				line4.p0in = in.at(key);
+			} else {
+				line4.p0out = out.at(key);
+			};
+
+			// p1
+			idxs[line_dim] = 1;
+			key = IdxSetKey(idxs,4);
+
+			// Just make it
+			line4.p1 = in.at(key);
+
+			// p2
+			idxs[line_dim] = 2;
+			key = IdxSetKey(idxs,4);
+
+			// Just make it
+			line4.p2 = in.at(key);
+
+			// p3
+			idxs[line_dim] = 3;
+			key = IdxSetKey(idxs,4);
+
+			// Check the type of this pt
+			line4.p3type = types.at(key);
+			if (line4.p3type == GridPtType::INSIDE) {
+				line4.p3in = in.at(key);
+			} else {
+				line4.p3out = out.at(key);
+			};
+
+			// Add
+			ret.push_back(line4);
+		};
+	};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	/****************************************
 	Implementation header
@@ -20,9 +186,6 @@ namespace L2PG {
 
 		// Dimension of grid
 		int _grid_dim;
-
-		// No pts in each dim of the grid
-		std::vector<std::shared_ptr<Dim>> _dims;		
 
 		// Abscissa
 		std::vector<double> _abscissas;
@@ -36,9 +199,6 @@ namespace L2PG {
 		// Check if index set is valid
 		void _check_idx_set_valid(IdxSetKey idxs);
 
-		// Iterate for making lines
-		void _iterate_other_idxs_make_line(IdxSet &idxs, int dim, int line_dim, std::vector<GridPtLine4> &ret) const;
-
 		// Constructor helpers
 		void _clean_up();
 		void _copy(const Impl& other);
@@ -50,7 +210,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		Impl(std::vector<double> abscissas, double ordinate, Nbr4 nbr4, std::vector<std::shared_ptr<Dim>>);
+		Impl(std::vector<double> abscissas, double ordinate, Nbr4 nbr4);
 		Impl(const Impl& other);
 		Impl(Impl&& other);
 		Impl& operator=(const Impl &other);
@@ -77,7 +237,7 @@ namespace L2PG {
 		std::shared_ptr<GridPtOut> get_nbr4_outside(IdxSetKey idxs) const;
 
 		// Make lines in dim....
-		std::vector<GridPtLine4> get_grid_pt_lines_4(int line_dim) const;
+		std::vector<Line4> get_grid_pt_lines_4(int line_dim) const;
 
 	};
 
@@ -115,13 +275,12 @@ namespace L2PG {
 	Implementation
 	****************************************/
 
-	DataPt::Impl::Impl(std::vector<double> abscissas, double ordinate, Nbr4 nbr4, std::vector<std::shared_ptr<Dim>> dims) {
+	DataPt::Impl::Impl(std::vector<double> abscissas, double ordinate, Nbr4 nbr4) {
 		// Store
 		_abscissas = abscissas;
 		_grid_dim = _abscissas.size();
 		_ordinate = ordinate;
 		_nbr4 = nbr4;
-		_dims = dims;
 	};
 	DataPt::Impl::Impl(const Impl& other) {
 		_copy(other);
@@ -159,7 +318,6 @@ namespace L2PG {
 	void DataPt::Impl::_copy(const Impl& other)
 	{	
 		_grid_dim = other._grid_dim;
-		_dims = other._dims;
 		_abscissas = other._abscissas;
 		_ordinate = other._ordinate;
 		_nbr4 = other._nbr4;
@@ -170,7 +328,6 @@ namespace L2PG {
 
 		// Reset other
 		other._grid_dim = 0;
-		other._dims.clear();
 		other._abscissas.clear();
 		other._ordinate = 0.0;
 		other._nbr4 = Nbr4();
@@ -231,85 +388,8 @@ namespace L2PG {
 	};
 
 	// Make lines in dim....
-	std::vector<GridPtLine4> DataPt::Impl::get_grid_pt_lines_4(int line_dim) const {
-
-		// To return
-		std::vector<GridPtLine4> ret;
-
-		// Idxs of the pts
-		IdxSet idxs(_grid_dim);
-
-		// Iterate over all other idxs to make it
-		_iterate_other_idxs_make_line(idxs,0,line_dim,ret);
-
-		return ret;
-	};
-
-	void DataPt::Impl::_iterate_other_idxs_make_line(IdxSet &idxs, int dim, int line_dim, std::vector<GridPtLine4> &ret) const {
-
-		if (dim != _grid_dim) {
-			// Deeper!
-
-			if (dim == line_dim) {
-				// Skip; do not loop this idx
-				_iterate_other_idxs_make_line(idxs,dim+1,line_dim,ret);
-			} else {
-				// Iterate all idxs in this dim
-				for (idxs[dim]=0; idxs[dim]<4; idxs[dim]++) {
-					_iterate_other_idxs_make_line(idxs,dim+1,line_dim,ret);
-				};
-			};
-
-		} else {
-			// Do something
-
-			// Make the line
-
-			GridPtLine4 line4;
-
-			// Iterate MANUALLY for the line_dim
-
-			// p0
-			idxs[line_dim] = 0;
-			IdxSetKey key(idxs,_dims);
-
-			// Check the type of this pt
-			line4.p0type = _nbr4.types.at(key);
-			if (line4.p0type == GridPtType::INSIDE) {
-				line4.p0in = _nbr4.in.at(key);
-			} else {
-				line4.p0out = _nbr4.out.at(key);
-			};
-
-			// p1
-			idxs[line_dim] = 1;
-			key = IdxSetKey(idxs,_dims);
-
-			// Just make it
-			line4.p1 = _nbr4.in.at(key);
-
-			// p2
-			idxs[line_dim] = 2;
-			key = IdxSetKey(idxs,_dims);
-
-			// Just make it
-			line4.p2 = _nbr4.in.at(key);
-
-			// p3
-			idxs[line_dim] = 3;
-			key = IdxSetKey(idxs,_dims);
-
-			// Check the type of this pt
-			line4.p3type = _nbr4.types.at(key);
-			if (line4.p3type == GridPtType::INSIDE) {
-				line4.p3in = _nbr4.in.at(key);
-			} else {
-				line4.p3out = _nbr4.out.at(key);
-			};
-
-			// Add
-			ret.push_back(line4);
-		};
+	std::vector<Line4> DataPt::Impl::get_grid_pt_lines_4(int line_dim) const {
+		return _nbr4.get_grid_pt_lines_4(line_dim,_grid_dim);
 	};
 
 
@@ -352,7 +432,7 @@ namespace L2PG {
 	Constructor
 	********************/
 
-	DataPt::DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4, std::vector<std::shared_ptr<Dim>> dims) : _impl(new Impl(abscissas, ordinate, nbr4, dims)) {};
+	DataPt::DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4) : _impl(new Impl(abscissas, ordinate, nbr4)) {};
 	DataPt::DataPt(const DataPt& other) : _impl(new Impl(*other._impl)) {};
 	DataPt::DataPt(DataPt&& other) : _impl(std::move(other._impl)) {};
 	DataPt& DataPt::operator=(const DataPt &other) {
@@ -399,7 +479,7 @@ namespace L2PG {
 	};
 
 	// Make lines in dim....
-	std::vector<GridPtLine4> DataPt::get_grid_pt_lines_4(int line_dim) const {
+	std::vector<Line4> DataPt::get_grid_pt_lines_4(int line_dim) const {
 		return _impl->get_grid_pt_lines_4(line_dim);
 	};
 
