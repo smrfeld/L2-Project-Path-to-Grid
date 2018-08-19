@@ -9,30 +9,89 @@
 
 namespace L2PG {
 
+ 	// Two types: in the grid and outside
+	enum class GridPtType: unsigned int { INSIDE, OUTSIDE };
+
 	/****************************************
 	Index set
 	****************************************/
 
+	class IdxSet {
+
+	private:
+		
+		// Idxs
+		std::vector<int> _idxs;
+
+	public:
+
+		/********************
+		Constructor
+		********************/
+
+		IdxSet();
+		IdxSet(int no_idxs);
+		IdxSet(std::vector<int> idxs);
+
+		/********************
+		Accessors
+		********************/
+
+		int operator [](int idx) const;
+		int & operator [](int idx);
+
+		int size() const;
+
+		bool find(int val);
+	};
+
+	// Printing
+    std::ostream& operator<< (std::ostream& stream, const IdxSet& idxs);
+
 	// Forward
 	class Dim;
 
-	struct IdxSet {
+	class IdxSetKey {
+
+	private:
+
+		// Bool outside
+		// Add 1 for indexing
+		bool _outside;
+
 		// Idxs
-		std::vector<int> idxs;
-		std::vector<int> max_idxs; // exlusive
+		IdxSet _idxs;
+		std::vector<int> _no_idxs_possible;
 
-		// Constructors
-		IdxSet();
-		IdxSet(int no_idxs, int max_idx);
-		IdxSet(std::vector<std::shared_ptr<Dim>> dims);
-		IdxSet(std::vector<std::shared_ptr<Dim>> dims, std::vector<int> idxs);
+	public:
 
-		// Accessors
-	    int operator[](int i) const;
-		int & operator[](int i);
+		/********************
+		Constructor
+		********************/
 
-		// Size
-		int size() const;
+		IdxSetKey(IdxSet idxs, int no_idxs_possible);
+		IdxSetKey(IdxSet idxs, GridPtType type, std::vector<std::shared_ptr<Dim>> dims);
+		/*
+		IdxSet(const IdxSet& other);
+		IdxSet(IdxSet&& other);
+		IdxSet& operator=(const IdxSet &other);
+		IdxSet& operator=(IdxSet &&other);
+		~IdxSet();
+		*/
+
+		/********************
+		Accessors
+		********************/
+
+		/*
+		int get_no_idxs_possible(int idx) const;
+
+		bool is_outside() const;
+		*/
+		/*
+		// Find
+		bool find(int val);
+		*/
 
 		// Linear idx
 		int get_linear() const;
@@ -42,18 +101,12 @@ namespace L2PG {
 	};
 
 	// Comparator
-	bool operator <(const IdxSet& x, const IdxSet& y);
-	bool operator ==(const IdxSet& x, const IdxSet& y);
-
-	// Printing
-    std::ostream& operator<< (std::ostream& stream, const IdxSet& idxs);
+	bool operator <(const IdxSetKey& x, const IdxSetKey& y);
+	bool operator ==(const IdxSetKey& x, const IdxSetKey& y);
 
 	/****************************************
 	Interior grid pt
 	****************************************/
- 
- 	// Two types: in the grid and outside
-	enum class GridPtType: unsigned int { INSIDE, OUTSIDE };
 
 	class GridPt {
 

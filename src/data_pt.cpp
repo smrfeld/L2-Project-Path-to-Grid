@@ -28,12 +28,10 @@ namespace L2PG {
 		double _ordinate;
 
 		// Surrounding 4 pts in each dim
-		std::map<IdxSet, GridPtType> _surrounding_type_map;
-		std::map<IdxSet, GridPt> _surrounding_inside_map;
-		std::map<IdxSet, GridPtOut> _surrounding_outside_map;
+		Nbr4 _nbr4;
 
 		// Check if index set is valid
-		void _check_idx_set_valid(IdxSet idxs);
+		void _check_idx_set_valid(IdxSetKey idxs);
 
 		// Constructor helpers
 		void _clean_up();
@@ -46,7 +44,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		Impl(std::vector<double> abscissas, double ordinate, std::map<IdxSet, GridPtType> surrounding_type_map, std::map<IdxSet, GridPt> surrounding_inside_map, std::map<IdxSet, GridPtOut> surrounding_outside_map);
+		Impl(std::vector<double> abscissas, double ordinate, Nbr4 nbr4);
 		Impl(const Impl& other);
 		Impl(Impl&& other);
 		Impl& operator=(const Impl &other);
@@ -67,9 +65,10 @@ namespace L2PG {
 		// Get surrounding grid point
 		// Length of idxs = _grid_dim
 		// Each idx = 0,1,2, or 3
-		GridPtType get_surrounding_grid_pt_type(IdxSet idxs) const;
-		GridPt get_surrounding_grid_pt_inside(IdxSet idxs) const;
-		GridPtOut get_surrounding_grid_pt_outside(IdxSet idxs) const;
+		Nbr4 get_nbr4() const;
+		GridPtType get_nbr4_type(IdxSetKey idxs) const;
+		std::shared_ptr<GridPt> get_nbr4_inside(IdxSetKey idxs) const;
+		std::shared_ptr<GridPtOut> get_nbr4_outside(IdxSetKey idxs) const;
 
 		// Make lines in dim....
 		std::vector<GridPtLine2> get_grid_pt_lines_2(int line_dim) const;
@@ -111,14 +110,12 @@ namespace L2PG {
 	Implementation
 	****************************************/
 
-	DataPt::Impl::Impl(std::vector<double> abscissas, double ordinate, std::map<IdxSet, GridPtType> surrounding_type_map, std::map<IdxSet, GridPt> surrounding_inside_map, std::map<IdxSet, GridPtOut> surrounding_outside_map) {
+	DataPt::Impl::Impl(std::vector<double> abscissas, double ordinate, Nbr4 nbr4) {
 		// Store
 		_abscissas = abscissas;
 		_grid_dim = _abscissas.size();
 		_ordinate = ordinate;
-		_surrounding_type_map = surrounding_type_map;
-		_surrounding_inside_map = surrounding_inside_map;
-		_surrounding_outside_map = surrounding_outside_map;
+		_nbr4 = nbr4;
 	};
 	DataPt::Impl::Impl(const Impl& other) {
 		_copy(other);
@@ -158,9 +155,7 @@ namespace L2PG {
 		_grid_dim = other._grid_dim;
 		_abscissas = other._abscissas;
 		_ordinate = other._ordinate;
-		_surrounding_type_map = other._surrounding_type_map;
-		_surrounding_inside_map = other._surrounding_inside_map;
-		_surrounding_outside_map = other._surrounding_outside_map;
+		_nbr4 = other._nbr4;
 	};
 	void DataPt::Impl::_move(Impl& other)
 	{
@@ -170,16 +165,15 @@ namespace L2PG {
 		other._grid_dim = 0;
 		other._abscissas.clear();
 		other._ordinate = 0.0;
-		other._surrounding_type_map.clear();
-		other._surrounding_inside_map.clear();
-		other._surrounding_outside_map.clear();
+		other._nbr4 = Nbr4();
 	};
 
 	/********************
 	Check if index set is valid
 	********************/
 
-	void DataPt::Impl::_check_idx_set_valid(IdxSet idxs) {
+	void DataPt::Impl::_check_idx_set_valid(IdxSetKey idxs) {
+		/*
 		// Check size
 		if (idxs.size() != _grid_dim) {
 			std::cerr << ">>> Error: DataPt::Impl::_check_idx_set_valid <<< IdxSet size must be grid dimensionality: " << _grid_dim << std::endl;
@@ -192,6 +186,7 @@ namespace L2PG {
 				exit(EXIT_FAILURE);
 			};
 		};
+		*/
 	};
 
 	/********************
@@ -214,14 +209,17 @@ namespace L2PG {
 	// Get surrounding grid point
 	// Length of idxs = _grid_dim
 	// Each idx = 0,1,2, or 3
-	GridPtType DataPt::Impl::get_surrounding_grid_pt_type(IdxSet idxs) const {
-		return _surrounding_type_map.at(idxs);
+	Nbr4 DataPt::Impl::get_nbr4() const {
+		return _nbr4;
 	};
-	GridPt DataPt::Impl::get_surrounding_grid_pt_inside(IdxSet idxs) const {
-		return _surrounding_inside_map.at(idxs);
+	GridPtType DataPt::Impl::get_nbr4_type(IdxSetKey idxs) const {
+		return _nbr4.types.at(idxs);
 	};
-	GridPtOut DataPt::Impl::get_surrounding_grid_pt_outside(IdxSet idxs) const {
-		return _surrounding_outside_map.at(idxs);
+	std::shared_ptr<GridPt> DataPt::Impl::get_nbr4_inside(IdxSetKey idxs) const {
+		return _nbr4.in.at(idxs);
+	};
+	std::shared_ptr<GridPtOut> DataPt::Impl::get_nbr4_outside(IdxSetKey idxs) const {
+		return _nbr4.out.at(idxs);
 	};
 
 	// Make lines in dim....
@@ -272,7 +270,7 @@ namespace L2PG {
 	Constructor
 	********************/
 
-	DataPt::DataPt(std::vector<double> abscissas, double ordinate, std::map<IdxSet, GridPtType> surrounding_type_map, std::map<IdxSet, GridPt> surrounding_inside_map, std::map<IdxSet, GridPtOut> surrounding_outside_map) : _impl(new Impl(abscissas, ordinate, surrounding_type_map, surrounding_inside_map, surrounding_outside_map)) {};
+	DataPt::DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4) : _impl(new Impl(abscissas, ordinate, nbr4)) {};
 	DataPt::DataPt(const DataPt& other) : _impl(new Impl(*other._impl)) {};
 	DataPt::DataPt(DataPt&& other) : _impl(std::move(other._impl)) {};
 	DataPt& DataPt::operator=(const DataPt &other) {
@@ -305,14 +303,17 @@ namespace L2PG {
 	// Get surrounding grid point
 	// Length of idxs = _grid_dim
 	// Each idx = 0,1,2, or 3
-	GridPtType DataPt::get_surrounding_grid_pt_type(IdxSet idxs) const {
-		return _impl->get_surrounding_grid_pt_type(idxs);
+	Nbr4 DataPt::get_nbr4() const {
+		return _impl->get_nbr4();
 	};
-	GridPt DataPt::get_surrounding_grid_pt_inside(IdxSet idxs) const {
-		return _impl->get_surrounding_grid_pt_inside(idxs);
+	GridPtType DataPt::get_nbr4_type(IdxSetKey idxs) const {
+		return _impl->get_nbr4_type(idxs);
 	};
-	GridPtOut DataPt::get_surrounding_grid_pt_outside(IdxSet idxs) const {
-		return _impl->get_surrounding_grid_pt_outside(idxs);
+	std::shared_ptr<GridPt> DataPt::get_nbr4_inside(IdxSetKey idxs) const {
+		return _impl->get_nbr4_inside(idxs);
+	};
+	std::shared_ptr<GridPtOut> DataPt::get_nbr4_outside(IdxSetKey idxs) const {
+		return _impl->get_nbr4_outside(idxs);
 	};
 
 	// Make lines in dim....

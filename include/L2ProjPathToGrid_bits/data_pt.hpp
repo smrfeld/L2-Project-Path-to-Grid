@@ -18,7 +18,7 @@ namespace L2PG {
 	enum class GridPtType: unsigned int;
 	class GridPt;
 	class GridPtOut;
-	class IdxSet;
+	class IdxSetKey;
 
 	// Line of 2 grid pts
 	struct GridPtLine2 {
@@ -40,6 +40,13 @@ namespace L2PG {
 		std::shared_ptr<GridPtOut> p0out, p3out;
 	};
 
+	// Neighborhood of points
+	struct Nbr4 {
+		std::map<IdxSetKey, GridPtType> types;
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> in;
+		std::map<IdxSetKey, std::shared_ptr<GridPtOut>> out;
+	};
+
 	class DataPt {
 
 	private:
@@ -53,7 +60,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		DataPt(std::vector<double> abscissas, double ordinate, std::map<IdxSet, GridPtType> surrounding_type_map, std::map<IdxSet, GridPt> surrounding_inside_map, std::map<IdxSet, GridPtOut> surrounding_outside_map);
+		DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4);
 		DataPt(const DataPt& other);
 		DataPt(DataPt&& other);
 		DataPt& operator=(const DataPt &other);
@@ -74,9 +81,10 @@ namespace L2PG {
 		// Get surrounding grid point
 		// Length of idxs = _grid_dim
 		// Each idx = 0,1,2, or 3
-		GridPtType get_surrounding_grid_pt_type(IdxSet idxs) const;
-		GridPt get_surrounding_grid_pt_inside(IdxSet idxs) const;
-		GridPtOut get_surrounding_grid_pt_outside(IdxSet idxs) const;
+		Nbr4 get_nbr4() const;
+		GridPtType get_nbr4_type(IdxSetKey idxs) const;
+		std::shared_ptr<GridPt> get_nbr4_inside(IdxSetKey idxs) const;
+		std::shared_ptr<GridPtOut> get_nbr4_outside(IdxSetKey idxs) const;
 
 		// Make lines in dim....
 		std::vector<GridPtLine2> get_grid_pt_lines_2(int line_dim) const;

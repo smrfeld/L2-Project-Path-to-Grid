@@ -84,11 +84,11 @@ namespace L2PG {
 
 		// Grid points
 		// std::vector<std::shared_ptr<GridPt>> _grid_pts;
-		std::map<IdxSet, std::shared_ptr<GridPt>> _grid_pts;
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> _grid_pts;
 
 		// Outside grid points
 		// std::vector<std::shared_ptr<GridPtOut>> _grid_pts_out;
-		std::map<IdxSet, std::shared_ptr<GridPtOut>> _grid_pts_out;
+		std::map<IdxSetKey, std::shared_ptr<GridPtOut>> _grid_pts_out;
 
 		// Length of the data
 		int _no_pts_data;
@@ -117,7 +117,9 @@ namespace L2PG {
 		Get surrounding
 		********************/
 
-		void _iterate_get_surrounding_2(IdxSet &idxs_local, IdxSet &idxs_lower, IdxSet &idxs_upper, std::map<IdxSet, std::shared_ptr<GridPt>> &map, int dim) const;
+		void _iterate_get_surrounding_2(IdxSet &idxs_local, IdxSet &idxs_lower, IdxSet &idxs_upper, std::map<IdxSetKey, std::shared_ptr<GridPt>> &map, int dim) const;
+
+		void _iterate_get_surrounding_4(IdxSet &idxs_local, IdxSet &idxs_0, IdxSet &idxs_1, IdxSet &idxs_2, IdxSet &idxs_3, Nbr4 &nbr4, int dim) const;
 
 		// Constructor helpers
 		void _clean_up();
@@ -159,18 +161,17 @@ namespace L2PG {
 		********************/
 
 		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPt> get_grid_point(IdxSetKey key) const;
 
-		/********************
-		Get neighbors
-		********************/
-
-		std::vector<std::shared_ptr<GridPt>> get_neighbors(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSetKey key) const;
 
 		/********************
 		Get grid points surrounding a point
 		********************/
 
-		std::map<IdxSet, std::shared_ptr<GridPt>> get_surrounding_2(std::vector<double> abscissas) const;
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> get_surrounding_2(std::vector<double> abscissas) const;
+		Nbr4 get_surrounding_4(std::vector<double> abscissas) const;
 
 		/********************
 		Project
@@ -406,7 +407,7 @@ namespace L2PG {
 		_grid_pts.clear();
 
 		// Iterate
-		IdxSet grid_pt_idxs(_dims);
+		IdxSet grid_pt_idxs(_dim_grid);
 		_iterate_make_grid_pt(grid_pt_idxs,0);
 	};
 
@@ -426,7 +427,7 @@ namespace L2PG {
 			};
 
 			// Make the grid pt
-			_grid_pts[grid_pt_idxs] = std::make_shared<GridPt>(grid_pt_idxs,abscissas);
+			_grid_pts[IdxSetKey(grid_pt_idxs,GridPtType::INSIDE,_dims)] = std::make_shared<GridPt>(grid_pt_idxs,abscissas);
 		};
 	};
 
@@ -445,7 +446,7 @@ namespace L2PG {
 		// Max = _dim_grid
 		for (int no_outside=1; no_outside <= _dim_grid; no_outside++) {
 			// The idxs of the grid point that are outside
-			IdxSet idxs_of_dims_outside(no_outside, _dim_grid);
+			IdxSet idxs_of_dims_outside(_dim_grid);
 			// Iterate
 			_iterate_which_dim_are_outside(idxs_of_dims_outside, 0, no_outside);
 		};	
@@ -457,8 +458,7 @@ namespace L2PG {
 			// Further down!
 
 			// Check if this dim is outside
-			auto it = std::find(idxs_of_dims_outside.idxs.begin(),idxs_of_dims_outside.idxs.end(),dim);
-			if (it == idxs_of_dims_outside.idxs.end()) {
+			if (!idxs_of_dims_outside.find(dim)) {
 				// Inside
 				// Loop all interior pts
 				for (grid_pt_idxs[dim]=0; grid_pt_idxs[dim]<_dims[dim]->get_no_pts(); grid_pt_idxs[dim]++) {
@@ -491,7 +491,7 @@ namespace L2PG {
 			};
 
 			// Find the two pts
-			IdxSet p1_idxs(_dims), p2_idxs(_dims);
+			IdxSet p1_idxs(_dim_grid), p2_idxs(_dim_grid);
 			for (auto dim2=0; dim2<_dim_grid; dim2++) {
 				if (grid_pt_idxs[dim2] == -1) {
 					p1_idxs[dim2] = grid_pt_idxs[dim2] + 1;
@@ -508,7 +508,7 @@ namespace L2PG {
 			std::shared_ptr<GridPt> p2 = get_grid_point(p2_idxs);
 
 			// Make the outside grid point
-			_grid_pts_out[grid_pt_idxs] = std::make_shared<GridPtOut>(grid_pt_idxs,abscissas,p1,p2);
+			_grid_pts_out[IdxSetKey(grid_pt_idxs,GridPtType::OUTSIDE,_dims)] = std::make_shared<GridPtOut>(grid_pt_idxs,abscissas,p1,p2);
 		};
 	};
 
@@ -544,7 +544,7 @@ namespace L2PG {
 			*/
 
 			// Go over all possible grid points satisfying having this many outside points
-			IdxSet grid_pt_idxs(_dims);
+			IdxSet grid_pt_idxs(_dim_grid);
 			_iterate_make_grid_pt_outside(grid_pt_idxs,idxs_of_dims_outside,0);
 		};
 	};
@@ -554,30 +554,24 @@ namespace L2PG {
 	********************/
 
 	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSet grid_idxs) const {
-		return _grid_pts.at(grid_idxs);
+		return _grid_pts.at(IdxSetKey(grid_idxs,GridPtType::INSIDE,_dims));
+	};
+	std::shared_ptr<GridPt> Projector::Impl::get_grid_point(IdxSetKey key) const {
+		return _grid_pts.at(key);
 	};
 
-	/********************
-	Get neighbors
-	********************/
-
-	std::vector<std::shared_ptr<GridPt>> Projector::Impl::get_neighbors(IdxSet grid_idxs) const {
-		// Check that it is not outside
-		IdxSet id = grid_idxs;
-		std::vector<std::shared_ptr<GridPt>> ret;
-		for (auto dim=0; dim<_dim_grid; dim++) {
-			// Get before and after!
-			id[0] -= 1;
-
-		};
-		return ret;
+	std::shared_ptr<GridPtOut> Projector::Impl::get_grid_point_outside(IdxSet grid_idxs) const {
+		return _grid_pts_out.at(IdxSetKey(grid_idxs,GridPtType::OUTSIDE,_dims));
+	};
+	std::shared_ptr<GridPtOut> Projector::Impl::get_grid_point_outside(IdxSetKey key) const {
+		return _grid_pts_out.at(key);
 	};
 
 	/********************
 	Get grid points surrounding a point
 	********************/
 
-	std::map<IdxSet, std::shared_ptr<GridPt>> Projector::Impl::get_surrounding_2(std::vector<double> abscissas) const {
+	std::map<IdxSetKey, std::shared_ptr<GridPt>> Projector::Impl::get_surrounding_2(std::vector<double> abscissas) const {
 		// Check size
 		if (abscissas.size() != _dim_grid) {
 			std::cerr << ">>> Error:Projector::Impl::get_surrounding_2 <<< Abscissa size should equal grid size." << std::endl;
@@ -585,7 +579,7 @@ namespace L2PG {
 		};
 
 		// Get bounding idxs
-		IdxSet idxs_lower(_dims), idxs_upper(_dims);
+		IdxSet idxs_lower(_dim_grid), idxs_upper(_dim_grid);
 		std::pair<bool,std::pair<int,int>> bounds;
 		for (auto dim=0; dim<_dim_grid; dim++) {
 			bounds = _dims[dim]->get_surrounding_idxs(abscissas[dim]);
@@ -600,14 +594,14 @@ namespace L2PG {
 		};
 
 		// Iterate to fill out the map
-		IdxSet idxs_local(_dim_grid,2);
-		std::map<IdxSet, std::shared_ptr<GridPt>> ret;
+		IdxSet idxs_local(_dim_grid);
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> ret;
 		_iterate_get_surrounding_2(idxs_local,idxs_lower,idxs_upper,ret,0);
 
 		return ret;
 	};
 
-	void Projector::Impl::_iterate_get_surrounding_2(IdxSet &idxs_local, IdxSet &idxs_lower, IdxSet &idxs_upper, std::map<IdxSet, std::shared_ptr<GridPt>> &map, int dim) const {
+	void Projector::Impl::_iterate_get_surrounding_2(IdxSet &idxs_local, IdxSet &idxs_lower, IdxSet &idxs_upper, std::map<IdxSetKey, std::shared_ptr<GridPt>> &map, int dim) const {
 		if (dim != _dim_grid) {
 			// Deeper!
 			// Can be lower (=0) or higher (=+1) in this dim
@@ -620,17 +614,100 @@ namespace L2PG {
 			// Do something
 
 			// Get grid point idxs
-			IdxSet idxs_grid_pt(_dims);
+			IdxSet idxs_grid_pt(_dim_grid);
 			for (auto dim2=0; dim2<_dim_grid; dim2++) {
 				if (idxs_local[dim2] == 0) {
 					idxs_grid_pt[dim2] = idxs_lower[dim2];
-				} else {
+				} else if (idxs_local[dim2] == 1) {
 					idxs_grid_pt[dim2] = idxs_upper[dim2];
 				};
 			};
 
 			// Add to map
-			map[idxs_local] = get_grid_point(idxs_grid_pt);
+			map[IdxSetKey(idxs_local,GridPtType::INSIDE,_dims)] = get_grid_point(idxs_grid_pt);
+		};
+	};
+
+	Nbr4 Projector::Impl::get_surrounding_4(std::vector<double> abscissas) const {
+		// Check size
+		if (abscissas.size() != _dim_grid) {
+			std::cerr << ">>> Error:Projector::Impl::get_surrounding_4 <<< Abscissa size should equal grid size." << std::endl;
+			exit(EXIT_FAILURE);
+		};
+
+		// Get bounding idxs
+		IdxSet idxs_0(_dim_grid), idxs_1(_dim_grid), idxs_2(_dim_grid), idxs_3(_dim_grid);
+		std::pair<bool,std::pair<int,int>> bounds;
+		for (auto dim=0; dim<_dim_grid; dim++) {
+			bounds = _dims[dim]->get_surrounding_idxs(abscissas[dim]);
+			if (!bounds.first) {
+				// Outside grid
+				std::cerr << ">>> Error:Projector::Impl::get_surrounding_4 <<< Abscissa in dim: " << dim << " value: " << abscissas[dim] << " is outside the grid: " << _dims[dim]->get_start_pt() << " to: " << _dims[dim]->get_end_pt() << std::endl;
+				exit(EXIT_FAILURE);
+			};
+
+			idxs_1[dim] = bounds.second.first;
+			idxs_2[dim] = bounds.second.second;
+			idxs_0[dim] = idxs_1[dim]-1;
+			idxs_3[dim] = idxs_2[dim]+1;
+		};
+
+		// Iterate to fill out the map
+		IdxSet idxs_local(_dim_grid);
+		Nbr4 ret;
+		_iterate_get_surrounding_4(idxs_local,idxs_0,idxs_1,idxs_2,idxs_3,ret,0);
+
+		return ret;
+	};	
+
+	void Projector::Impl::_iterate_get_surrounding_4(IdxSet &idxs_local, IdxSet &idxs_0, IdxSet &idxs_1, IdxSet &idxs_2, IdxSet &idxs_3, Nbr4 &nbr4, int dim) const {
+		if (dim != _dim_grid) {
+			// Deeper!
+			// Can be lower (=0,1) or higher (=2,3) in this dim
+			idxs_local[dim] = 0;
+			_iterate_get_surrounding_4(idxs_local,idxs_0,idxs_1,idxs_2,idxs_3,nbr4,dim+1);
+			idxs_local[dim] = 1;
+			_iterate_get_surrounding_4(idxs_local,idxs_0,idxs_1,idxs_2,idxs_3,nbr4,dim+1);
+			idxs_local[dim] = 2;
+			_iterate_get_surrounding_4(idxs_local,idxs_0,idxs_1,idxs_2,idxs_3,nbr4,dim+1);
+			idxs_local[dim] = 3;
+			_iterate_get_surrounding_4(idxs_local,idxs_0,idxs_1,idxs_2,idxs_3,nbr4,dim+1);
+
+		} else {
+			// Do something
+
+			// Get grid point idxs
+			IdxSet idxs_grid_pt(_dim_grid);
+			for (auto dim2=0; dim2<_dim_grid; dim2++) {
+				if (idxs_local[dim2] == 0) {
+					idxs_grid_pt[dim2] = idxs_0[dim2];
+				} else if (idxs_local[dim2] == 1) {
+					idxs_grid_pt[dim2] = idxs_1[dim2];
+				} else if (idxs_local[dim2] == 2) {
+					idxs_grid_pt[dim2] = idxs_2[dim2];
+				} else if (idxs_local[dim2] == 3) {
+					idxs_grid_pt[dim2] = idxs_3[dim2];
+				};
+			};
+
+			// Check: is it inside or out?
+			bool inside=true;
+			for (auto dim2=0; dim2<_dim_grid; dim2++) {
+				if (idxs_grid_pt[dim2] < 0 || idxs_grid_pt[dim2] > _dims[dim2]->get_no_pts()-1) {
+					// Out
+					inside = false;
+					break;
+				};
+			};
+
+			// Add to nbr4
+			if (inside) {
+				nbr4.types[IdxSetKey(idxs_local,GridPtType::INSIDE,_dims)] = GridPtType::INSIDE;
+				nbr4.in[IdxSetKey(idxs_local,GridPtType::INSIDE,_dims)] = get_grid_point(idxs_grid_pt);
+			} else {
+				nbr4.types[IdxSetKey(idxs_local,GridPtType::OUTSIDE,_dims)] = GridPtType::OUTSIDE;
+				nbr4.out[IdxSetKey(idxs_local,GridPtType::OUTSIDE,_dims)] = get_grid_point_outside(idxs_grid_pt);
+			};
 		};
 	};
 
@@ -732,32 +809,34 @@ namespace L2PG {
 	********************/
 
 	std::shared_ptr<GridPt> Projector::get_grid_point(std::vector<int> grid_idxs) const {
-		return get_grid_point(IdxSet(get_dims(), grid_idxs));
+		return get_grid_point(IdxSet(grid_idxs));
 	};
 	std::shared_ptr<GridPt> Projector::get_grid_point(IdxSet grid_idxs) const {
 		return _impl->get_grid_point(grid_idxs);
 	};
-
-	/********************
-	Get neighbors
-	********************/
-
-	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(std::shared_ptr<GridPt> grid_pt) const {
-		return get_neighbors(grid_pt->get_idxs());
+	std::shared_ptr<GridPt> Projector::get_grid_point(IdxSetKey key) const {
+		return _impl->get_grid_point(key);
 	};
-	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(std::vector<int> grid_idxs) const {
-		return get_neighbors(IdxSet(get_dims(), grid_idxs));
+
+	std::shared_ptr<GridPtOut> Projector::get_grid_point_outside(std::vector<int> grid_idxs) const {
+		return _impl->get_grid_point_outside(IdxSet(grid_idxs));
 	};
-	std::vector<std::shared_ptr<GridPt>> Projector::get_neighbors(IdxSet grid_idxs) const {
-		return _impl->get_neighbors(grid_idxs);
+	std::shared_ptr<GridPtOut> Projector::get_grid_point_outside(IdxSet grid_idxs) const {
+		return _impl->get_grid_point_outside(grid_idxs);
+	};
+	std::shared_ptr<GridPtOut> Projector::get_grid_point_outside(IdxSetKey key) const {
+		return _impl->get_grid_point_outside(key);
 	};
 
 	/********************
 	Get grid points surrounding a point
 	********************/
 
-	std::map<IdxSet, std::shared_ptr<GridPt>> Projector::get_surrounding_2(std::vector<double> abscissas) const {
+	std::map<IdxSetKey, std::shared_ptr<GridPt>> Projector::get_surrounding_2(std::vector<double> abscissas) const {
 		return _impl->get_surrounding_2(abscissas);
+	};
+	Nbr4 Projector::get_surrounding_4(std::vector<double> abscissas) const {
+		return get_surrounding_4(abscissas);
 	};
 
 	/********************

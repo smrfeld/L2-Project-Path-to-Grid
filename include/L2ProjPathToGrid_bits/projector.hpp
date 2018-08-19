@@ -54,7 +54,10 @@ namespace L2PG {
 	****************************************/
 
 	class GridPt;
+	class GridPtOut;
 	class IdxSet;
+	class IdxSetKey;
+	struct Nbr4;
 
 	class Projector {
 
@@ -90,34 +93,23 @@ namespace L2PG {
 		void read_path(std::string fname_path);
 
 		/********************
-		Get indexes
-		********************/
-
-		// Input: idx in each dim
-		int get_idx(IdxSet grid_idxs) const;
-		// Input: idx in the actual 1D vector
-		IdxSet get_idxs(int grid_idx) const; 
-
-		/********************
 		Get grid points
 		********************/
 
 		std::shared_ptr<GridPt> get_grid_point(std::vector<int> grid_idxs) const;
 		std::shared_ptr<GridPt> get_grid_point(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPt> get_grid_point(IdxSetKey key) const;
 
-		/********************
-		Get neighbors
-		********************/
-
-		std::vector<std::shared_ptr<GridPt>> get_neighbors(std::shared_ptr<GridPt> grid_pt) const;
-		std::vector<std::shared_ptr<GridPt>> get_neighbors(std::vector<int> grid_idxs) const;
-		std::vector<std::shared_ptr<GridPt>> get_neighbors(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPtOut> get_grid_point_outside(std::vector<int> grid_idxs) const;
+		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSet grid_idxs) const;
+		std::shared_ptr<GridPtOut> get_grid_point_outside(IdxSetKey key) const;
 
 		/********************
 		Get grid points surrounding a point
 		********************/
 
-		std::map<IdxSet, std::shared_ptr<GridPt>> get_surrounding_2(std::vector<double> abscissas) const;
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> get_surrounding_2(std::vector<double> abscissas) const;
+		Nbr4 get_surrounding_4(std::vector<double> abscissas) const;
 
 		/********************
 		Project
