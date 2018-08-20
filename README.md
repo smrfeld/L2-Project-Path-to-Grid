@@ -16,6 +16,10 @@ Link against the library like this: `g++ -std=c++14 -lL2ProjPathToGrid test.cpp 
 
 Include using `include <L2ProjPathToGrid>`. Namespace is `L2PG`.
 
+## Background
+
+See `doc` folder.
+
 ## Example
 
 See `examples/test` directory.

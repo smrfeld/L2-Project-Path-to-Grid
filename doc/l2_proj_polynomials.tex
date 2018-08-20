@@ -1,0 +1,257 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Packages
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{oke-header-math}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Mathematics
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\xdim}[1]{x^{[#1]}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Title
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{$L_2$ project polynomials along a path}
+\author{Oliver K. Ernst}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Begin document
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Polynomial in one variable}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Let the polynomial (in 1D) be:
+%---------------
+\begin{equation}
+f(x) = \sum_{l=0}^K \alpha_l x^l
+\end{equation}
+%---------------
+Let the data be of the form a trajectory $(x(t),y(t))$ for $t \in [0,T]$.
+
+We want to minimize:
+%---------------
+\begin{equation}
+\int_C ds \; \left ( f(x) - y \right )^2 = \int_{t=0}^{t=T} dt \; |s^\prime (t)| \left ( f(x(t)) - y(t) \right )^2
+\end{equation}
+%---------------
+along the curve of data points. Here:
+%---------------
+\begin{equation}
+\begin{split}
+s^\prime(t) &= \frac{dx(t)}{dt} \\
+|s^\prime(t)| &= \sqrt{ \left ( \frac{dx(t)}{dt} \right )^2}
+\end{split}
+\end{equation}
+%---------------
+
+But we don't have $(x(t),y(t))$ - instead, we only have discrete data points: $(x_i, y_i)$ for sample indexes $i=1,\dots,N$, with spacing $\Delta t$. The integral becomes:
+%---------------
+\begin{equation}
+\int_{t=0}^{t=T} dt \; |s^\prime (t)| \left ( f(x(t)) - y(t) \right )^2
+\approx
+\Delta t \sum_{i=1}^{N-1} |s_i^\prime| \left ( f(x_i) - y_i \right )^2
+\end{equation}
+%---------------
+where
+%---------------
+\begin{equation}
+|s_i^\prime| \approx \frac{ \sqrt{ \left ( x_{i+1} - x_i \right )^2} }{ \Delta t }
+\end{equation}
+%---------------
+gives
+%---------------
+\begin{equation}
+\sum_{i=1}^{N-1} \left ( f(x_i) - y_i \right )^2 \sqrt{ \left ( x_{i+1} - x_i \right )^2} 
+= 
+\sum_{i=1}^{N-1} \left ( \sum_{l=0}^K \alpha_l x_i^l - y_i \right )^2
+\sqrt{ \left ( x_{i+1} - x_i \right )^2}
+\end{equation}
+%---------------
+Minimizing with respect to some param $\alpha_k$ gives:
+%---------------
+\begin{equation}
+2 \sum_{i=1}^{N-1} \left ( \sum_{l=0}^K \alpha_l x_i^l - y_i \right ) x_i^k
+\sqrt{ \left ( x_{i+1} - x_i \right )^2}
+= 0
+\end{equation}
+%---------------
+Rewrite this in the form:
+%---------------
+\begin{equation}
+\vec{a}_k^\intercal \cdot \vec{\alpha} = b_k
+\end{equation}
+%---------------
+where $\vec{\alpha}^\intercal = (\alpha_0,\dots,\alpha_K)$ of length $K+1$ and the constant term is:
+%---------------
+\begin{equation}
+b_k = \sum_{i=1}^{N-1} y_i x_i^k \sqrt{ \left ( x_{i+1} - x_i \right )^2}
+\end{equation}
+%---------------
+and the vector elements are:
+%---------------
+\begin{equation}
+a_{kl} = \sum_{i=1}^{N-1} x_i^{l+k} \sqrt{ \left ( x_{i+1} - x_i \right )^2}
+\end{equation}
+%---------------
+Differentiating with respect to each of the $K+1$ parameters, we can form a $K+1\times K+1$ matrix $\boldsymbol{A}$ and vector $\vec{b}$:
+%---------------
+\begin{equation}
+\boldsymbol{A} \vec{\alpha} = \vec{b}
+\end{equation}
+%---------------
+where the elements of $\boldsymbol{A}$ are $a_{kl}$ and the elements of $\vec{b}$ are $b_k$ (indexed $0,\dots,K$).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{General formula}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Let the polynomial be generally $d$ dimensional. Let these be denoted by $\xdim{1},\dots,\xdim{d}$. 
+
+The general formula is as follows: for each parameter $\alpha_{<k>}$, let the corresponding $x$ term in the polynomial be $\hat{x}_{<k>}$ as some product of the $\xdim{j}$ raised to some powers. Let evaluating it at point $x_i$ indexed by $i$ with corresponding value $y_i$ be denoted by $(\hat{x}_{<k>})_i$.
+%---------------
+\begin{equation}
+b_k = 
+\sum_{i=1}^{N-1} 
+y_i \times
+(\hat{x}_{<k>})_i \times
+\sqrt{ \sum_{j=1}^d ( \xdim{j}_{i+1} - \xdim{j}_i )^2 }
+\end{equation}
+%---------------
+and the elements of the matrix as
+%---------------
+\begin{equation}
+a_{kl} = \sum_{i=1}^{N-1} 
+(\hat{x}_{<k>})_i \times
+(\hat{x}_{<l>})_i \times
+\sqrt{ \sum_{j=1}^d ( \xdim{j}_{i+1} - \xdim{j}_i )^2 }
+\end{equation}
+%---------------
+where the elements of the $N \times N$ matrix $\boldsymbol{A}$ are $a_{k\lambda}$, and the $N$ elements of $\vec{b}$ are $b_k$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Polynomial in arbitrary number of variables}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We now consider forming a general $d$-dimensional polynomial up to cutoff order $K$. How many terms are in the polynomial?
+\begin{itemize}
+\item Of order 0 terms, there is only 1. 
+\item Of order 1 terms, there are $d$ terms: $\xdim{1}, \dots, \xdim{d}$. 
+\item Of order $2$ terms, there $d$ pure terms $(\xdim{1})^2, \dots, (\xdim[d])^2$, and $\binom{d}{2}$ mixing terms: $(\xdim[1] \xdim[2]), \dots $. This gives a total of $d + \binom{d}{2} = \binom{d}{1} + \binom{d}{2}$ terms.
+\item Of order $l \geq 1$ terms, there are $\sum_{p=1}^l \binom{d}{p}$ terms.
+\end{itemize}
+For a general polynomial then of order $l=0,\dots,K$, we have for the number of terms:
+%---------------
+\begin{equation}
+M = 1 + \sum_{l=1}^K \sum_{p=1}^l \binom{d}{p}
+\end{equation}
+%---------------
+
+Let us try to write a general form. A general term of \textit{any} order in the polynomial is:
+%---------------
+\begin{equation}
+\prod_{j=1}^d (\xdim{j})^{p_j}
+\end{equation}
+%---------------
+Here, $p_j$ is the power of the term in the $j$-th dimension.
+
+A general term of order $l$ in the polynomial is:
+%---------------
+\begin{equation}
+\left ( \prod_{j=1}^{d-1} (\xdim{j})^{p_j} \right ) (\xdim{d})^{l - \sum_{r=1}^{d-1} p_r}
+\end{equation}
+%---------------
+Here, the last term enforces the constraint that the term is of order $l$. Note that this is irregardless of whether any power $p_j$ is greater than $l$, leading to some other power being less than zero - we will deal with this momentarily.
+
+To shorten notation, introduce:
+%---------------
+\begin{equation}
+P_{d-1} = \sum_{r=1}^{d-1} p_r
+\end{equation}
+%---------------
+We are now in position to write the general form of the polynomial:
+%---------------
+\begin{equation}
+f(\xdim{1},\dots,\xdim{d}) = \sum_{l=0}^K \sum_{p_1=0}^l \sum_{p_2=0}^{l-P_1} \dots \sum_{p_{d-1}=0}^{l - P_{d-2} } 
+\left ( \prod_{j=1}^{d-1} (\xdim{j})^{p_j} \right ) (\xdim{d})^{l - P_{d-1}} 
+\;
+\alpha_{l,p_1,\dots,p_{d-1}} 
+\label{eq:poly}
+\end{equation}
+%---------------
+Here, $\alpha_{l,p_1,\dots,p_{d-1}}$ are the coefficients to determine by $L_2$ projection.
+
+Following the arguments in the 1D case, the discrete sum to minimize is:
+%---------------
+\begin{equation}
+\sum_{i=1}^{N-1} \left ( f(\xdim{1}_i,\dots,\xdim{d}_i) - y_i \right )^2 \sqrt{ \sum_{j=1}^d ( \xdim{j}_{i+1} - \xdim{j}_i )^2 }
+\end{equation}
+%---------------
+where we may substitute~(\ref{eq:poly}). Differentiating with respect to some $\alpha_{k,q_1,\dots,q_{d-1}}$ gives:
+%---------------
+\begin{equation}
+2 \sum_{i=1}^{N-1} \left ( f(\xdim{1}_i,\dots,\xdim{d}_i) - y_i \right ) 
+\left ( \prod_{j=1}^{d-1} (\xdim{j}_i)^{q_j} \right ) (\xdim{d}_i)^{k - Q_{d-1}} 
+\sqrt{ \sum_{j=1}^d ( \xdim{j}_{i+1} - \xdim{j}_i )^2 }
+= 0
+\end{equation}
+%---------------
+where analogous to $P_{d-1}$ before: $Q_{d-1} = \sum_{r=1}^{d-1} q_r$.
+
+Assign the indexes $(l,p_1,\dots,p_{d-1})$ representing the coefficients $\alpha$ in the polynomial some ordering: $(l,p_1,\dots,p_{d-1}) \rightarrow \lambda$. Note that each of these indexes obey: $0 \leq p_j \leq l$ as well as $P_{d-1} = \sum_{r=1}^{d-1} p_r \leq l$.
+
+Then we may write this in the compact form as before:
+%---------------
+\begin{equation}
+\vec{a}_k^\intercal \cdot \vec{\alpha} = b_k
+\end{equation}
+%---------------
+where the vectors are of length $M$, the constant term is:
+%---------------
+\begin{equation}
+b_k = 
+\sum_{i=1}^{N-1} 
+y_i 
+\left ( \prod_{j=1}^{d-1} (\xdim{j}_i)^{q_j} \right ) (\xdim{d}_i)^{k - Q_{d-1}} 
+\sqrt{ \sum_{j=1}^d ( \xdim{j}_{i+1} - \xdim{j}_i )^2 }
+\end{equation}
+%---------------
+and the elements of the vector are
+%---------------
+\begin{equation}
+a_{k\lambda} = \sum_{i=1}^{N-1} 
+\left ( \prod_{j=1}^{d-1} (\xdim{j}_i)^{p_j + q_j} \right ) 
+(\xdim{d}_i)^{l + k - P_{d-1} - Q_{d-1}} 
+\sqrt{ \sum_{j=1}^d ( \xdim{j}_{i+1} - \xdim{j}_i )^2 }
+\end{equation}
+%---------------
+for the appropriate $(l,p_1,\dots,p_{d-1}) \leftrightarrow \lambda$.
+
+The solution is now given as above with $M \times M$ matrix $\boldsymbol{A}$ and vector $\vec{b}$ of length $M$.
+
+\end{document}
