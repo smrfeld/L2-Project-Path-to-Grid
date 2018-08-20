@@ -46,8 +46,8 @@ namespace L2PG {
 		std::map<IdxSetKey, std::shared_ptr<GridPtOut>> out;
 
 		// Get lines of 4 in some dim
-		std::vector<Line4> get_grid_pt_lines_4(int line_dim, int grid_dim) const;
-		void _iterate_other_idxs_make_line(IdxSet &idxs, int dim, int grid_dim, int line_dim, std::vector<Line4> &ret) const;
+		std::vector<Line4> get_grid_pt_lines_4(int line_dim, int dim_grid) const;
+		void _iterate_other_idxs_make_line(IdxSet &idxs, int dim, int dim_grid, int line_dim, std::vector<Line4> &ret) const;
 	};
 
 	class Dim;
@@ -65,7 +65,7 @@ namespace L2PG {
 		Constructor
 		********************/
 
-		DataPt(std::vector<double> abscissas, double ordinate, Nbr4 nbr4);
+		DataPt(std::vector<double> abscissas, double ordinate, std::map<IdxSetKey, std::shared_ptr<GridPt>> nbr2, Nbr4 nbr4);
 		DataPt(const DataPt& other);
 		DataPt(DataPt&& other);
 		DataPt& operator=(const DataPt &other);
@@ -83,9 +83,14 @@ namespace L2PG {
 		// Ordinate
 		double get_ordinate() const;
 
+		// Get frac abscissa (between 0 and 1, between nearest grid points)
+		double get_frac_abscissa(int dim) const;
+		std::vector<double> get_frac_abscissas() const;
+
 		// Get surrounding grid point
-		// Length of idxs = _grid_dim
+		// Length of idxs = _dim_grid
 		// Each idx = 0,1,2, or 3
+		std::map<IdxSetKey, std::shared_ptr<GridPt>> get_nbr2() const;
 		Nbr4 get_nbr4() const;
 		GridPtType get_nbr4_type(IdxSetKey idxs) const;
 		std::shared_ptr<GridPt> get_nbr4_inside(IdxSetKey idxs) const;

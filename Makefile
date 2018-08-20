@@ -5,7 +5,7 @@ CXX = g++
 # C++ flags
 CXXFLAGS = -std=c++14 -fPIC -O3 -g
 # linking flags
-LDFLAGS = -shared
+LDFLAGS = -shared -larmadillo
 # target lib
 TARGET_LIB = lib/libL2ProjPathToGrid.so
 # build dir
