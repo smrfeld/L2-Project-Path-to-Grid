@@ -12,8 +12,8 @@ int main() {
 	****************************************/
 
 	// Dims
-	auto d1 = make_shared<Dim>(0.0,1.0,21);
-	auto d2 = make_shared<Dim>(0.0,1.0,21);
+	auto d1 = make_shared<Dim>(0.0,1.0,41);
+	auto d2 = make_shared<Dim>(0.0,1.0,41);
 	vector<shared_ptr<Dim>> dims({d1,d2});
 
 	// Projector
