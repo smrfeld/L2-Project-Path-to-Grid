@@ -28,7 +28,7 @@ After running `project()`, the grid obtained is:
 
 ![Grid](examples/test/figures/grid.png "Grid")
 
-Interpolating in this grid at a higher resolution (see Mathematica notebook `analyze`):d
+Interpolating in this grid at a higher resolution (see Mathematica notebook `analyze`):
 
 ![GridResampled](examples/test/figures/grid_resampled.png "Grid Resampled")
 
