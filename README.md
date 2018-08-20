@@ -2,13 +2,19 @@
 
 L2 project a path to a regular grid in arbitrary dimension, using cubic splines in the grid.
 
+## Dependencies
+
+Armadillo.
+
 ## Install
 
 Use the makefile: `make` and `make install`.
 
 ## Compilation
 
-Link against the library like this: `g++ -std=c++14 -lL2ProjPathToGrid test.cpp -o test.o`
+Link against the library like this: `g++ -std=c++14 -lL2ProjPathToGrid test.cpp -o test.o`.
+
+Include using `include <L2ProjPathToGrid>`. Namespace is `L2PG`.
 
 ## Example
 
