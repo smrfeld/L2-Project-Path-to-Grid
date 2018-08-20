@@ -254,4 +254,39 @@ for the appropriate $(l,p_1,\dots,p_{d-1}) \leftrightarrow \lambda$.
 
 The solution is now given as above with $M \times M$ matrix $\boldsymbol{A}$ and vector $\vec{b}$ of length $M$.
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Essentials of cubic interpolation in 1D}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Summarizing the essentials of \href{https://www.paulinternet.nl/?page=bicubic}{Paul Breeuwsma's website}.
+
+Consider being given 4 points: $(-1,p_0),(0,p_1),(1,p_2),(2,p_3)$. The goal is to estimate the value at a point $x \in [0,1]$ by cubic splines. The formula is:
+%---------------
+\begin{equation}
+f(p_0,p_1,p_2,p_3,x) = \left ( - \frac{1}{2} p_0 + \frac{3}{2} p_1 - \frac{3}{2} p_2 + \frac{1}{2} p_3 \right ) x^3 + \left ( p_0 - \frac{5}{2} p_1 + 2 p_2 - \frac{1}{2} p_3 \right ) x^2 + \left ( - \frac{1}{2} p_0 + \frac{1}{2} p_2 \right ) x + p_1
+\end{equation}
+%---------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Cubic interpolation in arbitrary dimension}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{enumerate}
+\item Locate the neighborhood of 4 points in all $d$ dimensions, for a total of $4^d$ points.
+\item Draw lines along one dimension, for a total of $4^{d-1}$ lines, each of length $4$ points.
+\item Perform 1D interpolation along each line to obtain $4^{d-1}$ points.
+\item Repeat 1.
+\end{enumerate}
+
+The resulting $f(\boldsymbol{x})$ can be used in the $L_2$ projection above. For every data point, there are $4^d$ surrounding points. A well-determined problem is guaranteed if there are at least $4^d$ data points inside each voxel.
+
 \end{document}
