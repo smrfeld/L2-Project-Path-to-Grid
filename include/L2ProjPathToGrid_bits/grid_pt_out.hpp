@@ -1,7 +1,4 @@
-#ifndef VECTOR_H
-#define VECTOR_H
 #include <vector>
-#endif
 
 /************************************
 * Namespace for L2PG
